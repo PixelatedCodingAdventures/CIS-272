@@ -1,3 +1,4 @@
+[![CI](https://github.com/PixelatedCodingAdventures/CIS-272/actions/workflows/ci.yml/badge.svg)](https://github.com/PixelatedCodingAdventures/CIS-272/actions/workflows/ci.yml)
 # Cloning the branch
 In terminal: git clone git@github.com:PixelatedCodingAdventures/CIS-272.git <br>
 cd to folder and type: <br>
