@@ -1,0 +1,34 @@
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: equipment_checkout
+      MYSQL_USER: testuser
+      MYSQL_PASSWORD: testpassword
+      MYSQL_ROOT_PASSWORD: rootpassword
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      WEB_SERVER_PORT: 3000
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: testuser
+      DB_PASSWORD: testpassword
+      DB_NAME: equipment_checkout
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "npm run migrate && npm start"
+
+volumes:
+  mysql_data:
