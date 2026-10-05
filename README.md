@@ -13,8 +13,9 @@ This should install all the dependencies in package.json
 
 # Environment credentials
 
-credentials for the database are stored in the file ".env" <br>
-Along with ports and DB local ip address.
+`.env.example` documents all environment variables used by the application. \<br>
+The `.env` file is used for local development credentials and is excluded from Git. \<br>
+Docker provides the required environment variables automatically, so a `.env` file is not required when running the application with Docker.
 
 # db.js
 
