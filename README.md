@@ -53,6 +53,183 @@ the github actions for CI/CD runs from a single file: .github\workflows\ci.yml <
 This takes a few minutes because it has to load a Linux server, install Node.js and MySQL, and then run the tests. <br>
 To view pipeline click "actions tab" after a push/merge to develop/main.
 
+# Deployment
+
+The Equipment Checkout application is deployed on an OVHcloud VPS running Ubuntu Linux with Node.js 24, Express.js, and MySQL 8.0.
+
+# Production Environment
+
+- Hosting Provider: OVHcloud VPS
+- Operating System: Ubuntu Linux
+- Runtime: Node.js 24
+- Backend: Express.js
+- Database: MySQL 8.0
+- Process Manager: Forever
+- Version Control: GitHub
+
+# Public URLs
+
+Live Application: https://www.equipmentcheckout.online
+
+Health Check: https://www.equipmentcheckout.online/health
+
+# Deployment Steps
+
+## Update the Server
+
+Update the Ubuntu package list and install curl:
+
+```
+sudo apt update
+sudo apt install -y curl
+```
+
+## Install Node.js 24
+
+Install Node.js 24 using the NodeSource repository:
+
+```
+curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash -
+sudo apt install -y nodejs
+```
+
+## Install MySQL
+
+Install MySQL 8.0:
+
+```
+sudo apt install mysql-server -y
+```
+
+Enable MySQL to start automatically when the server boots:
+
+```
+sudo systemctl enable mysql
+sudo systemctl start mysql
+```
+
+## Configure the Database
+
+Open the MySQL console:
+
+```
+sudo mysql
+```
+
+Create the database and database user:
+
+```
+CREATE DATABASE equipment_checkout;
+
+CREATE USER 'YOUR_DB_USER'@'localhost'
+IDENTIFIED BY 'YOUR_SECURE_PASSWORD';
+
+GRANT ALL PRIVILEGES
+ON equipment_checkout.*
+TO 'YOUR_DB_USER'@'localhost';
+
+FLUSH PRIVILEGES;
+```
+
+Replace the placeholders with the production database credentials. Do not commit actual production passwords to GitHub.
+
+Exit the MySQL console:
+
+```
+EXIT;
+```
+
+## Clone the Repository
+
+Clone the Equipment Checkout repository onto the Ubuntu server:
+
+```
+git clone https://github.com/PixelatedCodingAdventures/CIS-272.git
+cd CIS-272
+```
+
+Check out the branch or release intended for production.
+
+## Install Dependencies
+
+Install the application dependencies:
+
+```
+npm install
+```
+
+Configure the production environment variables using `.env.example` as a reference.
+
+## Install Forever
+
+Forever is used to keep the Node.js application running and restart it if the process crashes.
+
+Install Forever globally:
+
+```
+sudo npm install -g forever
+```
+
+## Start the Application
+
+Start the Express.js application:
+
+```
+forever start server.js
+```
+
+To view running processes:
+
+```
+forever list
+```
+
+To stop the application:
+
+```
+forever stop server.js
+```
+
+Note: Forever does not automatically configure application startup after a server reboot. Additional startup configuration is required.
+
+# Deployment Verification
+
+## Application Endpoint
+
+Open the following URL:
+
+https://www.equipmentcheckout.online
+
+The page should display:
+
+```
+Equipment Checkout API
+```
+
+## Health Check Endpoint
+
+To verify that both the application and database are running correctly, open:
+
+https://www.equipmentcheckout.online/health
+
+The health endpoint should return:
+
+```
+{"app":"up","database":"up"}
+```
+
+# Deployment Notes
+
+The production application runs directly on an Ubuntu Linux VPS using Node.js, Express.js, MySQL 8.0, and Forever.
+
+Docker is used separately for local development and testing.
+
+GitHub Actions runs automated CI checks when changes are pushed or merged to develop/main.
+
+The public application URLs are documented in this README and shared with the development team through Slack.
+
+Additional production details, including HTTPS configuration, database migrations, automatic startup after reboot, and future deployment updates, should be confirmed with the team member responsible for the VPS.
+
 # Docker Setup
 
 The application can be run using Docker with Node.js 22 and MySQL 8.0. Docker provides a consistent development environment for all team members without requiring Node.js or MySQL to be installed locally.
