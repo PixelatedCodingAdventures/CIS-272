@@ -362,3 +362,12 @@ docker compose up --build
 ```
 
 Remember that removing the Docker volume deletes all data stored in the Docker database.
+
+## React
+
+To launch the React frontend, run the following command from the project root directory:
+
+```bash
+ "npm run dev"
+```
+The 'src' folder contains the React components. Take a look at 'App.jsx' to familiarize yourself with the code.
