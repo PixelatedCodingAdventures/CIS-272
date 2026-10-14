@@ -26,5 +26,8 @@ app.get("/health", async (req, res) => {
     });
   }
 });
+// NEW: Borrower loan routes
+const loansRouter = require("./routes/loans");
+app.use("/loans", loansRouter);
 
 module.exports = app;
