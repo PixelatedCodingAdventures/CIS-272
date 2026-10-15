@@ -487,3 +487,13 @@ A sprint is considered done when:
 - [ ] GitHub Actions CI is passing.
 - [ ] Changes are merged into main and deployed.
 - [ ] Any required documentation is updated.
+
+## React
+
+To launch the React frontend, run the following command from the project root directory:
+
+```bash
+ "npm run dev"
+```
+
+The 'src' folder contains the React components. Take a look at 'App.jsx' to familiarize yourself with the code.
