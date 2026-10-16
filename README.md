@@ -1,4 +1,5 @@
 [![CI](https://github.com/PixelatedCodingAdventures/CIS-272/actions/workflows/ci.yml/badge.svg)](https://github.com/PixelatedCodingAdventures/CIS-272/actions/workflows/ci.yml)
+
 # Cloning the branch
 
 In terminal: git clone git@github.com:PixelatedCodingAdventures/CIS-272.git <br>
@@ -26,15 +27,111 @@ This file is to do with database connection. pulls in info from the .env file.
 Serves one page or API endpoint (GET /) - (localhost:3000) <br>
 Health check for app + DB (GET /health) - (localhost:3000/health)
 
-# migration.js
+# migrate.js
 
-Connects to DB + migration <br>
-Uploads a basic table from: migrations/001_initial.sql
+Runs SQL database migrations using the MySQL connection pool in `db.js`. <br>
+Creates a `schema_migrations` table to track completed migrations. <br>
+Processes migration files in filename order and skips migrations that have already been applied.
+
+Current migration files:
+
+- `001_initial.sql` - Creates the initial `app_setup` table.
+- `002_create_users.sql` - Creates the users table and defines user roles.
+- `003_create_equipment.sql` - Creates the equipment inventory table.
+- `004_create_loans.sql` - Creates the loans table with foreign keys and checkout constraints.
+
+Run migrations using:
+
+```
+npm run migrate
+```
+
+Migrations also run automatically when the application starts through Docker Compose.
+
+# Database Schema
+
+Sprint 2 introduces three main database tables: `users`, `equipment`, and `loans`.
+
+## Users Table
+
+Stores application users and their assigned roles.
+
+- `id` - Primary key.
+- `name` - User's name.
+- `email` - Unique email address.
+- `password_hash` - Stores the hashed password.
+- `role` - Borrower, lab staff, or department lead.
+- `is_active` - Indicates whether the account is active.
+- Timestamps track record creation and updates.
+
+## Equipment Table
+
+Stores equipment inventory and availability information.
+
+- `id` - Primary key.
+- `name` - Equipment name.
+- `asset_tag` - Unique equipment identifier.
+- `description` - Optional equipment details.
+- `status` - Available, checked out, maintenance, or retired.
+- `equipment_condition` - Excellent, good, fair, poor, or damaged.
+- Timestamps track record creation and updates.
+
+## Loans Table
+
+Tracks equipment checkouts and returns.
+
+- `id` - Primary key.
+- `borrower_id` - Foreign key referencing `users.id`.
+- `equipment_id` - Foreign key referencing `equipment.id`.
+- `checkout_date` - Date equipment was checked out.
+- `due_date` - Required return date.
+- `return_date` - Actual return date, if returned.
+- `return_condition` - Equipment condition upon return.
+- Timestamps track record creation and updates.
+
+## Database Relationships and Constraints
+
+- Each loan belongs to one user and one equipment item.
+- Foreign keys prevent loans from referencing nonexistent users or equipment.
+- Due dates cannot be earlier than checkout dates.
+- Return dates cannot be earlier than checkout dates.
+- A unique constraint on the generated `active_equipment_id` column prevents an equipment item from having multiple active loans.
+- Once equipment is returned, it can be checked out again.
+- Unique constraints prevent duplicate user emails and equipment asset tags.
+- Foreign key restrictions prevent deleting users or equipment referenced by loans.
 
 # tests/app.test.js
 
 Jest tests that: (GET /) and expects: "Equipment Checkout API" <br>
 Jest tests that: (GET /health) and expects: {"app":"up","database":"up"}
+
+# tests/database.test.js
+
+Jest tests that verify the Sprint 2 database schema and constraints.
+
+The seven automated tests verify:
+
+- All required database tables exist.
+- All four migrations are recorded in `schema_migrations`.
+- Loans cannot reference nonexistent borrowers.
+- Loans cannot reference nonexistent equipment.
+- Due dates cannot be earlier than checkout dates.
+- Equipment cannot have multiple active loans.
+- Returned equipment can be checked out again.
+
+Run all automated tests locally:
+
+```
+npm test -- --runInBand
+```
+
+Run all automated tests inside Docker:
+
+```
+docker compose exec app npm test -- --runInBand
+```
+
+All 9 tests (2 application tests and 7 database tests) passed locally and inside Docker during Sprint 2 verification.
 
 # server.js
 
@@ -160,6 +257,20 @@ npm install
 
 Configure the production environment variables using `.env.example` as a reference.
 
+## Run Database Migrations
+
+Before starting the application, apply any pending database migrations:
+
+```
+npm run migrate
+```
+
+The migration runner creates the required database tables, records completed migrations in `schema_migrations`, and skips migrations that have already been applied.
+
+Ensure the production database credentials are configured correctly before running this command.
+
+Note: Production migrations should be coordinated with the team member responsible for deployment. Do not reset or delete the production database.
+
 ## Install Forever
 
 Forever is used to keep the Node.js application running and restart it if the process crashes.
@@ -256,7 +367,8 @@ Docker will automatically:
 - Start the MySQL 8.0 database container.
 - Create the application database and database user.
 - Wait for MySQL to become healthy.
-- Run the database migration.
+- Run all pending database migrations in filename order.
+- Skip migrations that have already been applied.
 - Start the application on port 3000.
   Once startup is complete, open:
   `http://localhost:3000`
@@ -305,7 +417,9 @@ docker compose exec app npm test
 ```
 
 This runs the Jest test suite inside the Node.js 22 application container.
-**## Run ESLint**
+
+## Run ESLint
+
 While the Docker containers are running, run:
 
 ```bash
@@ -363,6 +477,17 @@ docker compose up --build
 
 Remember that removing the Docker volume deletes all data stored in the Docker database.
 
+## Definition of Done
+
+A sprint is considered done when:
+
+- [ ] All acceptance criteria are met.
+- [ ] Automated tests are written and passing.
+- [ ] The pull request has been reviewed and approved by at least one teammate.
+- [ ] GitHub Actions CI is passing.
+- [ ] Changes are merged into main and deployed.
+- [ ] Any required documentation is updated.
+
 ## React
 
 To launch the React frontend, run the following command from the project root directory:
@@ -370,4 +495,5 @@ To launch the React frontend, run the following command from the project root di
 ```bash
  "npm run dev"
 ```
+
 The 'src' folder contains the React components. Take a look at 'App.jsx' to familiarize yourself with the code.
