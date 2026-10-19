@@ -27,7 +27,10 @@ app.get("/health", async (req, res) => {
   }
 });
 // NEW: Borrower loan routes
+const { authenticate } = require("./middleware/auth");
 const loansRouter = require("./routes/loans");
-app.use("/loans", loansRouter);
+const staffRouter = require("./routes/staff");
+app.use("/loans", authenticate, loansRouter);
+app.use("/staff", authenticate, staffRouter);
 
 module.exports = app;
