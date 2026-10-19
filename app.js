@@ -564,6 +564,7 @@ app.post("/login", async (req, res, next) => {
             if (err) return next(err);
 
             req.session.userId = user.id;
+            req.session.role = user.role;
 
             req.session.save((err) => {
                 if (err) return next(err);
