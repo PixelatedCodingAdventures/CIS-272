@@ -29,6 +29,7 @@ const Users = () => {
         try {
             const response = await fetch("http://localhost:3000/users", {
                 method: "POST",
+                credentials: "include",
                 headers: {
                     "Content-Type": "application/json"
                 },

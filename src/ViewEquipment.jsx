@@ -10,29 +10,32 @@ const ViewEquipment = () => {
     const [error, setError] = useState("");
     const [message, setMessage] = useState("");
 
-    useEffect(() => {
-        const fetchEquipment = async () => {
-            try {
-                const response = await fetch(
-                    "http://localhost:3000/equipment"
-                );
-
-                if (!response.ok) {
-                    throw new Error("Failed to fetch equipment");
+useEffect(() => {
+    const fetchEquipment = async () => {
+        try {
+            const response = await fetch(
+                "http://localhost:3000/equipment",
+                {
+                    credentials: "include"
                 }
+            );
 
-                const data = await response.json();
-                setEquipment(data);
-
-            } catch (error) {
-                setError(error.message);
-            } finally {
-                setLoading(false);
+            if (!response.ok) {
+                throw new Error("Failed to fetch equipment");
             }
-        };
 
-        fetchEquipment();
-    }, []);
+            const data = await response.json();
+            setEquipment(data);
+
+        } catch (error) {
+            setError(error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    fetchEquipment();
+}, []);
 
     const handleEdit = (item) => {
         setEditingId(item.id);
@@ -59,10 +62,14 @@ const ViewEquipment = () => {
             const response = await fetch(
                 `http://localhost:3000/equipment/${id}`,
                 {
+                    
                     method: "PUT",
+                    credentials: "include",
                     headers: {
                         "Content-Type": "application/json"
+                        
                     },
+                    
                     body: JSON.stringify({
                         name: editData.name,
                         asset_tag: editData.asset_tag,
@@ -116,7 +123,8 @@ const ViewEquipment = () => {
             const response = await fetch(
                 `http://localhost:3000/equipment/${id}`,
                 {
-                    method: "DELETE"
+                    method: "DELETE",
+                    credentials: "include"
                 }
             );
 

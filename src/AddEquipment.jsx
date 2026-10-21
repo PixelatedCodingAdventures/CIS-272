@@ -35,6 +35,7 @@ const AddEquipment = () => {
                 "http://localhost:3000/equipment",
                 {
                     method: "POST",
+                    credentials: "include",
                     headers: {
                         "Content-Type": "application/json"
                     },
