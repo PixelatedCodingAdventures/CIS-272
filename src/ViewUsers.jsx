@@ -13,8 +13,10 @@ const ViewUsers = () => {
         const fetchUsers = async () => {
             try {
                 const response = await fetch(
-                    "http://localhost:3000/users"
-                );
+                    "http://localhost:3000/users", {
+
+                    credentials: "include"
+                })
 
                 if (!response.ok) {
                     throw new Error("Failed to fetch users");
@@ -60,6 +62,7 @@ const ViewUsers = () => {
                 `http://localhost:3000/users/${id}`,
                 {
                     method: "PUT",
+                    credentials: "include",
                     headers: {
                         "Content-Type": "application/json"
                     },
@@ -122,7 +125,8 @@ const ViewUsers = () => {
         const response = await fetch(
             `http://localhost:3000/users/${id}`,
             {
-                method: "DELETE"
+                method: "DELETE",
+                credentials: "include"
             }
         );
 
