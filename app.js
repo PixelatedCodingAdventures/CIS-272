@@ -1,7 +1,11 @@
 const express = require("express");
 const pool = require("./db");
+const loanRoutes = require('./routes/loanRoutes')
 
 const app = express();
+app.use(express.json())
+
+app.use('/', loanRoutes);
 
 app.get("/", (req, res) => {
   res.send("Equipment Checkout API");
@@ -26,5 +30,7 @@ app.get("/health", async (req, res) => {
     });
   }
 });
+
+
 
 module.exports = app;
