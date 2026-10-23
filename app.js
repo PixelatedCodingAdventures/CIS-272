@@ -58,10 +58,14 @@ app.use(session({
 
 const { authenticate } = require("./middleware/auth");
 const equipmentRouter = require("./routes/equipment");
-app.use("/equipment", authenticate, equipmentRouter);
-
+const loansRouter = require("./routes/loans");
+const staffRouter = require("./routes/staff");
 const usersRouter = require("./routes/users");
+
+app.use("/equipment", authenticate, equipmentRouter);
 app.use("/users", authenticate, usersRouter);
+app.use("/loans", authenticate, loansRouter);
+app.use("/staff", authenticate, staffRouter);
 
 //app.use("/equipment", equipmentRouter);
 
@@ -95,14 +99,6 @@ app.get("/health", async (req, res) => {
     });
   }
 });
-
-
-
-
-
-
-
-
 app.post("/login", async (req, res, next) => {
     try {
         const { email, password } = req.body;
