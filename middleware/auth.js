@@ -6,17 +6,13 @@ const ROLES = Object.freeze({
 
 const VALID_ROLES = Object.values(ROLES);
 
-// TEMPORARY identity source until real authentication exists:
-// the caller supplies X-User-Id and X-User-Role headers.
-// Swap this function for session/token logic later; requireRole stays the same.
 function authenticate(req, res, next) {
-  const id = Number.parseInt(req.get("X-User-Id"), 10);
-  const role = req.get("X-User-Role");
-
-  if (!Number.isInteger(id) || !role) {
+  const session = req.session;
+  if (!session || !Number.isInteger(session.userId) || session.userId <= 0) {
     return res.status(401).json({ error: "Authentication required" });
   }
 
+  const { userId: id, role } = session;
   if (!VALID_ROLES.includes(role)) {
     return res.status(403).json({ error: "Unrecognized role" });
   }

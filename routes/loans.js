@@ -9,7 +9,20 @@ router.get("/my", requireRole(ROLES.BORROWER), async (req, res) => {
     const borrowerId = req.user.id;
 
     const [rows] = await pool.query(
-      "SELECT item_name, checkout_date, due_date, status FROM loans WHERE borrower_id = ?",
+      `SELECT
+         e.name AS item_name,
+         l.checkout_date,
+         l.due_date,
+         CASE
+           WHEN l.return_date IS NOT NULL THEN 'returned'
+           WHEN l.due_date < NOW() THEN 'overdue'
+           ELSE 'active'
+         END AS status
+       FROM loans l
+       JOIN equipment e ON e.id = l.equipment_id
+       WHERE l.borrower_id = ?
+         AND l.return_date IS NULL
+       ORDER BY l.due_date ASC`,
       [borrowerId]
     );
 
