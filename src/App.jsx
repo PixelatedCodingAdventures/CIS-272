@@ -22,6 +22,7 @@ import Logout from './Logout';
 
 import './App.css';
 
+// Protect routes that require login
 function ProtectedRoute({ children }) {
   const { user, loading } = useUser();
 
@@ -36,6 +37,7 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
+// Protect routes that require staff permissions
 function StaffRoute({ children }) {
   const { user, loading } = useUser();
 
@@ -82,9 +84,12 @@ export default function App() {
 
       {/* Navigation Bar */}
       <nav>
-        <Link to="/">Home</Link> -
+        <Link to="/">Home</Link> - 
         <Link to="/about">About</Link> -
         <Link to="/example-page">Example</Link> -
+        
+
+      
         {!loading &&
           ["lab_staff", "department_lead"].includes(user?.role) && (
             <>
@@ -105,9 +110,9 @@ export default function App() {
 
         {!loading && (
           user ? (
-            <Link to="/logout">Logout</Link>
+            <Link to="/logout">Logout</Link> 
           ) : (
-            <Link to="/login">Login</Link>
+            <Link to="/login">Login</Link> 
           )
         )}
         {!loading && user?.role === 'borrower' && (
@@ -172,7 +177,6 @@ export default function App() {
             </StaffRoute>
           }
         />
-
         <Route
           path="/my-loans"
           element={

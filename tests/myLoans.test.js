@@ -66,17 +66,6 @@ describe("GET /loans/my", () => {
     expect(sql).toContain("l.return_date IS NULL");
   });
 
-  test("includes returned loans when status=all is requested", async () => {
-    pool.query.mockResolvedValue([[], []]);
-
-    const borrower = await asBorrower(7);
-    await borrower.get("/loans/my?status=all");
-
-    const [sql, params] = pool.query.mock.calls[0];
-    expect(params).toEqual([7]);
-    expect(sql).not.toContain("l.return_date IS NULL");
-  });
-
   test("shows the empty message when there are no active loans", async () => {
     pool.query.mockResolvedValue([[], []]);
 

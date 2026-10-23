@@ -7,8 +7,6 @@ const { ROLES, requireRole } = require("../middleware/auth");
 router.get("/my", requireRole(ROLES.BORROWER), async (req, res) => {
   try {
     const borrowerId = req.user.id;
-    const activeOnly =
-      req.query.status === "all" ? "" : "AND l.return_date IS NULL";
 
     const [rows] = await pool.query(
       `SELECT
@@ -23,7 +21,7 @@ router.get("/my", requireRole(ROLES.BORROWER), async (req, res) => {
        FROM loans l
        JOIN equipment e ON e.id = l.equipment_id
        WHERE l.borrower_id = ?
-         ${activeOnly}
+         AND l.return_date IS NULL
        ORDER BY l.due_date ASC`,
       [borrowerId]
     );
@@ -36,6 +34,7 @@ router.get("/my", requireRole(ROLES.BORROWER), async (req, res) => {
     }
 
     res.json({ loans: rows });
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Failed to fetch loans" });
