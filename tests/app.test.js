@@ -1,4 +1,4 @@
-/* global describe, test, expect, afterAll */
+
 
 const request = require("supertest");
 const app = require("../app");
