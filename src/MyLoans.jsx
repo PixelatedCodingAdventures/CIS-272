@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 
 const formatDate = (value) => new Date(value).toLocaleDateString();
 
-// Identity comes from localStorage until real login exists (matches X-User-* headers in middleware/auth.js).
 export default function MyLoans() {
   const [loans, setLoans] = useState(null);
   const [message, setMessage] = useState('');
@@ -10,10 +9,7 @@ export default function MyLoans() {
 
   useEffect(() => {
     fetch('/loans/my', {
-      headers: {
-        'X-User-Id': localStorage.getItem('userId') || '',
-        'X-User-Role': localStorage.getItem('userRole') || 'borrower',
-      },
+      credentials: 'include',
     })
       .then(async (res) => {
         const data = await res.json();
