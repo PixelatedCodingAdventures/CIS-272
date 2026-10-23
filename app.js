@@ -12,9 +12,9 @@ const SQLiteStore = require("connect-sqlite3")(session);
 
 
 const app = express();
-app.use(express.json())
 
-app.use('/', loanRoutes);
+
+
 
 
 
@@ -70,8 +70,9 @@ app.use("/equipment", authenticate, equipmentRouter);
 app.use("/users", authenticate, usersRouter);
 app.use("/loans", authenticate, loansRouter);
 app.use("/staff", authenticate, staffRouter);
+app.use('/', authenticate, loanRoutes);
 
-//app.use("/equipment", equipmentRouter);
+
 
 
 

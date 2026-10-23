@@ -1,26 +1,100 @@
-/* global describe, test, expect, afterAll */
+/**
+ * @jest-environment node
+ */
 const { getOverdueLoans, getEquipmentHistory, returnEquipment, checkoutEquipment } = require('../controllers/loanControllers')
 
 const db = require('../db')
 const makeMockRes = require("../helpers/makeMockRes");
-jest.mock('../db')
-
-const express = require('express');
-const app = express();
-
-app.use(express.json())
-
-
-
-
-
-
+jest.mock('../db');
 
 describe("Test for loanControllers.js", () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+        jest.resetAllMocks();
+    })
+    afterEach(() => {
+        jest.clearAllMocks();
+        jest.resetAllMocks();
+    })
+
+    test("Database failure returns 500 for getOverdueLoans", async () => {
+        
+
+
+
+
+        const req = {}
+        let res = makeMockRes()
+        await getOverdueLoans(req, res);
+
+        res.json.mock.calls[0][0];
+
+
+        expect(res.status).toHaveBeenCalledWith(500)
+
+
+
+    })
+
+    test("Database failure returns 500 for getEquipmentHistory", async () => {
+        
+
+
+
+
+        const req = {}
+        let res = makeMockRes()
+        await getEquipmentHistory(req, res);
+
+        
+
+
+        expect(res.status).toHaveBeenCalledWith(500)
+
+
+
+    })
+
+    test("Database failure returns 500 for checkoutEquipment", async () => {
+        
+
+
+
+
+        const req = {}
+        let res = makeMockRes()
+        await checkoutEquipment(req, res);
+
+        
+
+
+        expect(res.status).toHaveBeenCalledWith(500)
+
+
+
+    })
+    test("Database failure returns 500 for returnEquipment", async () => {
+        
+
+
+
+
+        const req = {}
+        let res = makeMockRes()
+        await returnEquipment(req, res);
+
+        
+
+
+        expect(res.status).toHaveBeenCalledWith(500)
+
+
+
+    })
     test("getOverdueLoans grabs all overdue loans", async () => {
         const mockData = [[
-            { id: 20, borrower_id: 975, equipment_id: 20, checkout_date: "2026-09-30 00:00:00", due_date: "2026-10-15 00:00:00", return_date: null, return_condition: null, active_equipment_id: 20 },
-            { id: 19, borrower_id: 579, equipment_id: 19, checkout_date: "2026-09-20 00:00:00", due_date: "2026-10-05 00:00:00", return_date: null, return_condition: null, active_equipment_id: 19 }
+            { id: 19, borrower_id: 579, equipment_id: 19, checkout_date: "2026-09-20 00:00:00", due_date: "2026-10-05 00:00:00", return_date: null, return_condition: null, active_equipment_id: 19 },
+            { id: 20, borrower_id: 975, equipment_id: 20, checkout_date: "2026-09-30 00:00:00", due_date: "2026-10-15 00:00:00", return_date: null, return_condition: null, active_equipment_id: 20 }
         ]]
 
         const expectedData = [
@@ -35,17 +109,17 @@ describe("Test for loanControllers.js", () => {
 
         const body = res.json.mock.calls[0][0];
 
+        expect(res.status).toHaveBeenCalledWith(200)
+        expect(body).toEqual(expectedData)
 
-        expect(body).toEqual(expect.arrayContaining(expectedData))
-        expect(db.query).toHaveBeenCalledTimes(2);
-        expect(db.query).toHaveBeenCalledWith('SELECT * FROM loans WHERE due_date < NOW() ORDER BY due_date ASC;')
+
 
     }),
 
-        test("getEquipmentHistory throws 404 when it finds no records for specified id", async () => {
-            const mockData = [[]]
+        test("getEquipmentHistory throws 404 when it finds specified equipment id doesnt exist in db", async () => {
 
-            db.query.mockResolvedValue(mockData)
+
+            db.query.mockResolvedValue([[]])
 
 
             const req = {
@@ -59,20 +133,59 @@ describe("Test for loanControllers.js", () => {
             const body = res.json.mock.calls[0][0];
 
             expect(res.status).toHaveBeenCalledWith(404)
-            expect(body).toEqual({ message: 'No history found with id 19' })
+            expect(body).toEqual({ message: 'No equipment found with id 19' })
 
         })
 
+    test("getEquipmentHistory throws 404 when it finds no loan history for specific id", async () => {
+
+
+        db.query.mockResolvedValueOnce([[{
+            id: 19,
+            name: 'test',
+            asset_tag: 'testing',
+            description: 'a test for api calls',
+            status: 'checked_out',
+            equipment_condition: 'good',
+            created_at: "2026-10-21 00:00:00",
+            updated_at: "2026-10-23 00:00:00"
+        }]]).mockResolvedValueOnce([[]])
+
+
+        const req = {
+            params: {
+                id: 19
+            }
+        }
+        let res = makeMockRes()
+        await getEquipmentHistory(req, res)
+
+        const body = res.json.mock.calls[0][0];
+
+        expect(res.status).toHaveBeenCalledWith(404)
+        expect(body).toEqual({ message: 'No loan history found with id 19' })
+
+    })
+
     test("getEquipmentHistory grabs all records for a specific id", async () => {
-        const mockData = [[
-            { id: 19, borrower_id: 579, equipment_id: 19, checkout_date: "2026-09-20 00:00:00", due_date: "2026-10-05 00:00:00", return_date: null, return_condition: null, active_equipment_id: 19 }
-        ]]
+
+
+
 
         const expectedData = [
             { id: 19, borrower_id: 579, equipment_id: 19, checkout_date: "2026-09-20 00:00:00", due_date: "2026-10-05 00:00:00", return_date: null, return_condition: null, active_equipment_id: 19 }
         ]
 
-        db.query.mockResolvedValue(mockData);
+        db.query.mockResolvedValueOnce([[{
+            id: 19,
+            name: 'test',
+            asset_tag: 'testing',
+            description: 'a test for api calls',
+            status: 'checked_out',
+            equipment_condition: 'good',
+            created_at: "2026-10-21 00:00:00",
+            updated_at: "2026-10-23 00:00:00"
+        }]]).mockResolvedValueOnce([[{ id: 19, borrower_id: 579, equipment_id: 19, checkout_date: "2026-09-20 00:00:00", due_date: "2026-10-05 00:00:00", return_date: null, return_condition: null, active_equipment_id: 19 }]])
 
         const req = {
             params: {
@@ -85,16 +198,23 @@ describe("Test for loanControllers.js", () => {
         const body = res.json.mock.calls[0][0];
 
         expect(body).toEqual(expectedData)
-        expect(db.query).toHaveBeenCalledTimes(6);
-        expect(db.query).toHaveBeenCalledWith("SELECT * FROM loans WHERE equipment_id = 19")
+        expect(db.query).toHaveBeenCalledTimes(2);
+
 
     })
 
 
     test("returnEquipment returns 404 for no active loans with specific id", async () => {
-        const mockData = [[]]
 
-        db.query.mockResolvedValue(mockData)
+        db.getConnection = jest.fn().mockResolvedValue({
+            beginTransaction: jest.fn(),
+            commit: jest.fn(),
+            rollback: jest.fn(),
+            release: jest.fn(),
+            query: db.query.mockResolvedValueOnce([[]])
+        })
+
+        await db.getConnection();
 
         const req = {
             params: {
@@ -110,20 +230,34 @@ describe("Test for loanControllers.js", () => {
 
         const body = res.json.mock.calls[0][0]
         expect(res.status).toHaveBeenCalledWith(404)
-        expect(body).toEqual({ message: 'There is no active loans with id 19' })
+        expect(body).toEqual({ message: 'No active loans with the id provided.' })
     })
+    test("returnEquipment returns 406 for invalid condition", async () => {
 
-    test("returnEquipment returns 406 for invalid status", async () => {
-        const mockData = [[{ id: 19, borrower_id: 579, equipment_id: 19, checkout_date: "2026-09-20 00:00:00", due_date: "2026-10-05 00:00:00", return_date: null, return_condition: null, active_equipment_id: 19 }]]
 
-        db.query.mockResolvedValue(mockData)
+        db.getConnection = jest.fn().mockResolvedValue({
+            beginTransaction: jest.fn(),
+            commit: jest.fn(),
+            rollback: jest.fn(),
+            release: jest.fn(),
+            query: db.query.mockResolvedValueOnce([[
+                { id: 612, borrower_id: 25, equipment_id: 19, checkout_date: "2026-10-23 00:00:00", due_date: "2026-11-27 00:00:00", return_date: null, return_condition: null, active_equipment_id: 19, created_at: "2026-10-23 00:00:00", updated_at: "2026-10-23 00:00:00" }
+            ]])
+
+        })
+
+         await db.getConnection();
+
+
+
+
 
         const req = {
             params: {
                 id: 19
             },
             body: {
-                condition: "ass"
+                condition: "goo"
             }
         }
 
@@ -132,14 +266,28 @@ describe("Test for loanControllers.js", () => {
 
         const body = res.json.mock.calls[0][0]
         expect(res.status).toHaveBeenCalledWith(406)
-        expect(body).toEqual({ message: 'Invalid Condition' })
+        expect(body).toEqual({ message: 'Invalid condition. Condition must be damaged, poor, fair, good or excellent.' })
     })
+    test("returnEquipment returns checked out equipment", async () => {
 
 
-    test("returnEquipment returns 404 for no active loans with specific id", async () => {
-        const mockData = [[]]
+        db.getConnection = jest.fn().mockResolvedValue({
+            beginTransaction: jest.fn(),
+            commit: jest.fn(),
+            rollback: jest.fn(),
+            release: jest.fn(),
+            query: db.query.mockResolvedValueOnce([[
+                { id: 612, borrower_id: 25, equipment_id: 19, checkout_date: "2026-10-23 00:00:00", due_date: "2026-11-27 00:00:00", return_date: null, return_condition: null, active_equipment_id: 19, created_at: "2026-10-23 00:00:00", updated_at: "2026-10-23 00:00:00" }
+            ]]),
+            execute: jest.fn()
 
-        db.query.mockResolvedValue(mockData)
+        })
+
+         await db.getConnection();
+
+
+
+
 
         const req = {
             params: {
@@ -154,22 +302,28 @@ describe("Test for loanControllers.js", () => {
         await returnEquipment(req, res)
 
         const body = res.json.mock.calls[0][0]
-        expect(res.status).toHaveBeenCalledWith(404)
-        expect(body).toEqual({ message: 'There is no active loans with id 19' })
+        expect(res.status).toHaveBeenCalledWith(200)
+        expect(body).toEqual({ message: 'Equipment returned successfully!' })
     })
 
-    test("checkoutEquipment returns 404 for no active loans with specific id", async () => {
-        const equipmentMockData = [[]]
-        const usersMockData = [[]]
+    test("checkoutEquipment throws 404 for equipment not found", async () => {
 
-        db.query.mockResolvedValue(equipmentMockData)
-        db.query.mockResolvedValue(usersMockData)
+        db.getConnection = jest.fn().mockResolvedValue({
+            beginTransaction: jest.fn(),
+            commit: jest.fn(),
+            rollback: jest.fn(),
+            release: jest.fn(),
+            query: db.query.mockResolvedValueOnce([[]])
+        })
+
+         await db.getConnection();
 
         const req = {
+
             body: {
-                "equipment_id": 19,
-                "borrower_id": 25,
-                "due_date": "2026-11-25 20:00:00"
+                equipment_id: 19,
+                borrower_id: 25,
+                due_date: "11-05-2026 00:00:00"
             }
         }
 
@@ -178,38 +332,106 @@ describe("Test for loanControllers.js", () => {
 
         const body = res.json.mock.calls[0][0]
         expect(res.status).toHaveBeenCalledWith(404)
-        expect(body).toEqual({ message: 'No equipment found with the equipment id of 19.' })
-    }),
+        expect(body).toEqual({ message: 'Equipment not found.' })
+    })
 
-        test("checkoutEquipment returns 404 for user not existing", async () => {
-            const equipmentMockData = [[{
-                id: 19,
-                name: 'test',
-                asset_tag: 'testing',
-                description: 'a test for api calls',
-                status: 'available',
-                equipment_condition: 'good',
-                created_at: "2026-10-21 03:32:29",
-                updated_at: "2026-10-22 07:24:32"
-            }]]
-            const usersMockData = [[]]
+    test("checkoutEquipment throws 409 for equipment being checked out", async () => {
 
-            db.execute.mockResolvedValueOnce(equipmentMockData)
-
-            const req = {
-                body: {
-                    "equipment_id": 19,
-                    "borrower_id": 25,
-                    "due_date": "2026-11-25 20:00:00"
-                }
-            }
-
-            let res = makeMockRes()
-            await checkoutEquipment(req, res)
-
-            const body = res.json.mock.calls[0][0]
-            expect(db.query).toHaveBeenCalledTimes(2)
-            expect(res.status).toHaveBeenCalledWith(404)
-            expect(body).toEqual({ message: 'User does not exist.' })
+        db.getConnection = jest.fn().mockResolvedValue({
+            beginTransaction: jest.fn(),
+            commit: jest.fn(),
+            rollback: jest.fn(),
+            release: jest.fn(),
+            query: db.query.mockResolvedValueOnce([[
+                { id: 19, name: 'test', asset_tag: 'testing', description: 'a test for api calls', status: 'checked_out', equipment_condition: 'good', created_at: "2026-10-21 00:00:00", updated_at: "2026-10-23 00:00:00" }
+            ]])
         })
+
+
+         await db.getConnection();
+
+        const req = {
+
+            body: {
+                equipment_id: 19,
+                borrower_id: 25,
+                due_date: "11-05-2026 00:00:00"
+            }
+        }
+
+        let res = makeMockRes()
+        await checkoutEquipment(req, res)
+
+        const body = res.json.mock.calls[0][0]
+        expect(res.status).toHaveBeenCalledWith(409)
+        expect(body).toEqual({ message: 'Equipment is not available.' })
+    })
+
+    test("checkoutEquipment throws 404 for user not being found", async () => {
+
+        db.getConnection = jest.fn().mockResolvedValue({
+            beginTransaction: jest.fn(),
+            commit: jest.fn(),
+            rollback: jest.fn(),
+            release: jest.fn(),
+            query: db.query.mockResolvedValueOnce([[
+                { id: 19, name: 'test', asset_tag: 'testing', description: 'a test for api calls', status: 'available', equipment_condition: 'good', created_at: "2026-10-21 00:00:00", updated_at: "2026-10-23 00:00:00" }
+            ]]).mockResolvedValueOnce([[]])
+        })
+
+
+         await db.getConnection();
+
+        const req = {
+
+            body: {
+                equipment_id: 19,
+                borrower_id: 25,
+                due_date: "11-05-2026 00:00:00"
+            }
+        }
+
+        let res = makeMockRes()
+        await checkoutEquipment(req, res)
+
+        const body = res.json.mock.calls[0][0]
+        expect(res.status).toHaveBeenCalledWith(404)
+        expect(body).toEqual({ message: 'Borrower not found.' })
+    })
+
+    test("checkoutEquipment checks out available equipment to existing user", async () => {
+
+        db.getConnection = jest.fn().mockResolvedValue({
+            beginTransaction: jest.fn(),
+            commit: jest.fn(),
+            rollback: jest.fn(),
+            release: jest.fn(),
+            query: db.query.mockResolvedValueOnce([[
+                { id: 19, name: 'test', asset_tag: 'testing', description: 'a test for api calls', status: 'available', equipment_condition: 'good', created_at: "2026-10-21 00:00:00", updated_at: "2026-10-23 00:00:00" }
+            ]]).mockResolvedValueOnce([[
+                { id: 25, name: 'John Doe', email: 'JohnDoe@test.com', password_hash: 'password', role: 'borrower', is_active: 1, created_at: "2026-10-21 00:00:00", updated_at: "2026-10-21 00:00:00" }
+            ]]),
+            execute: jest.fn()
+        })
+
+
+         await db.getConnection();
+
+        const req = {
+
+            body: {
+                equipment_id: 19,
+                borrower_id: 25,
+                due_date: "11-05-2026 00:00:00"
+            }
+        }
+
+        let res = makeMockRes()
+        await checkoutEquipment(req, res)
+
+        const body = res.json.mock.calls[0][0]
+        expect(res.status).toHaveBeenCalledWith(200)
+        expect(body).toEqual({ message: 'Equipment checked out successfully!' })
+    })
+
 })

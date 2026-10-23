@@ -1,16 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const{ getOverdueLoans, getEquipmentHistory, returnEquipment, checkoutEquipment } = require('../controllers/loanControllers')
+const { ROLES, requireRole } = require("../middleware/auth");
 
-const app = express();
-app.use(express.json())
 
-router.get('/loans/overdue', getOverdueLoans)
 
-router.get('/equipment/:id/history', getEquipmentHistory)
 
-router.post('/loans/checkout', checkoutEquipment)
+router.get('/loans/overdue', requireRole(ROLES.LAB_STAFF, ROLES.DEPARTMENT_LEAD),   getOverdueLoans)
 
-router.patch('/loans/:id/return', returnEquipment)
+router.get('/equipment/:id/history', requireRole(ROLES.LAB_STAFF, ROLES.DEPARTMENT_LEAD), getEquipmentHistory)
+
+router.post('/loans/checkout', requireRole(ROLES.LAB_STAFF, ROLES.DEPARTMENT_LEAD), checkoutEquipment)
+
+router.patch('/loans/:id/return', requireRole(ROLES.LAB_STAFF, ROLES.DEPARTMENT_LEAD), returnEquipment)
 
 module.exports = router;

@@ -1,7 +1,7 @@
-const { execute } = require("../db");
-
 module.exports = () => {
     const res = {
+        
+        
         status: jest.fn(() => {
             return res;
         }),
@@ -11,9 +11,7 @@ module.exports = () => {
         send: jest.fn(() => {
             return res;
         }),
-        execute: jest.fn(() =>{
-            return res;
-        })
+        
     }
 
     return res;
