@@ -1,4 +1,4 @@
-/* global describe, test, expect, jest, beforeEach */
+
 
 jest.mock("../db", () => ({
   query: jest.fn(),

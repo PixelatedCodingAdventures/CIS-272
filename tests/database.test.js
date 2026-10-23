@@ -1,4 +1,4 @@
-/* global describe, test, expect, afterAll */
+
 const pool = require("../db");
 
 describe("Database schema and migrations", () => {
