@@ -1,6 +1,5 @@
 const express = require("express");
 const pool = require("./db");
-const loanRoutes = require('./routes/loanRoutes')
 
 const cors = require("cors");
 const bcrypt = require("bcrypt");
@@ -12,9 +11,6 @@ const SQLiteStore = require("connect-sqlite3")(session);
 
 
 const app = express();
-
-
-
 
 
 
@@ -70,9 +66,8 @@ app.use("/equipment", authenticate, equipmentRouter);
 app.use("/users", authenticate, usersRouter);
 app.use("/loans", authenticate, loansRouter);
 app.use("/staff", authenticate, staffRouter);
-app.use('/', authenticate, loanRoutes);
 
-
+//app.use("/equipment", equipmentRouter);
 
 
 
@@ -226,7 +221,5 @@ app.get("/session", async (req, res) => {
         });
     }
 });
-
-
 
 module.exports = app;
