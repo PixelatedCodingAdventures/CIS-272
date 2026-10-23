@@ -12,6 +12,7 @@ import { useUser } from './context/UserContext';
 import Home from './Home';
 import About from './About';
 import Example from './Example';
+import MyLoans from './MyLoans';
 import AddUser from './AddUser';
 import ViewUsers from './ViewUsers';
 import AddEquipment from './AddEquipment';
@@ -57,6 +58,24 @@ function StaffRoute({ children }) {
   return children;
 }
 
+function BorrowerRoute({ children }) {
+  const { user, loading } = useUser();
+
+  if (loading) {
+    return <p>Checking session...</p>;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (user.role !== 'borrower') {
+    return <p>Access denied.</p>;
+  }
+
+  return children;
+}
+
 export default function App() {
   const { user, loading } = useUser();
 
@@ -95,6 +114,11 @@ export default function App() {
           ) : (
             <Link to="/login">Login</Link> 
           )
+        )}
+        {!loading && user?.role === 'borrower' && (
+          <>
+            <Link to="/my-loans">My Loans</Link> -
+          </>
         )}
       </nav>
 
@@ -151,6 +175,14 @@ export default function App() {
             <StaffRoute>
               <AddEquipment />
             </StaffRoute>
+          }
+        />
+        <Route
+          path="/my-loans"
+          element={
+            <BorrowerRoute>
+              <MyLoans />
+            </BorrowerRoute>
           }
         />
       </Routes>
