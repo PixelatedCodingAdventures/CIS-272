@@ -3,10 +3,10 @@ const router = express.Router();
 const pool = require("../db");
 const { ROLES, requireRole } = require("../middleware/auth");
 
-// Pass ?status=all to also include returned loans.
+// GET /loans/my - borrowers see only their own loans
 router.get("/my", requireRole(ROLES.BORROWER), async (req, res) => {
   try {
-    const includeReturned = req.query.status === "all";
+    const borrowerId = req.user.id;
 
     const [rows] = await pool.query(
       `SELECT
@@ -21,12 +21,12 @@ router.get("/my", requireRole(ROLES.BORROWER), async (req, res) => {
        FROM loans l
        JOIN equipment e ON e.id = l.equipment_id
        WHERE l.borrower_id = ?
-         ${includeReturned ? "" : "AND l.return_date IS NULL"}
+         AND l.return_date IS NULL
        ORDER BY l.due_date ASC`,
-      [req.user.id]
+      [borrowerId]
     );
 
-    if (!Array.isArray(rows) || rows.length === 0) {
+    if (rows.length === 0) {
       return res.json({
         message: "You currently have no active loans.",
         loans: []

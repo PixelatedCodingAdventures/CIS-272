@@ -57,6 +57,10 @@ describe("Role-based access control", () => {
     const res = await borrower.get("/loans/my");
     expect(res.statusCode).toBe(200);
     expect(pool.query.mock.calls.at(-1)[1]).toEqual([7]);
+    const [sql] = pool.query.mock.calls.at(-1);
+    expect(sql).toContain("JOIN equipment e ON e.id = l.equipment_id");
+    expect(sql).toContain("e.name AS item_name");
+    expect(sql).toContain("l.return_date IS NULL");
   });
 
   test("borrower cannot access staff or department features", async () => {
