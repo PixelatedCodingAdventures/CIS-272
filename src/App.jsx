@@ -10,6 +10,8 @@ import {
 import { useUser } from './context/UserContext';
 
 import Home from './Home';
+import About from './About';
+import Example from './Example';
 import MyLoans from './MyLoans';
 import AddUser from './AddUser';
 import ViewUsers from './ViewUsers';
@@ -81,6 +83,8 @@ export default function App() {
       {/* Navigation Bar */}
       <nav>
         <Link to="/">Home</Link> -
+        <Link to="/about">About</Link> -
+        <Link to="/example-page">Example</Link> -
         {!loading &&
           ["lab_staff", "department_lead"].includes(user?.role) && (
             <>
@@ -117,6 +121,8 @@ export default function App() {
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/example-page" element={<Example />} />
 
         <Route path="/login" element={<Login />} />
 
