@@ -10,6 +10,8 @@ import {
 import { useUser } from './context/UserContext';
 
 import Home from './Home';
+import About from './About';
+import Example from './Example';
 import AddUser from './AddUser';
 import ViewUsers from './ViewUsers';
 import AddEquipment from './AddEquipment';
@@ -64,6 +66,8 @@ export default function App() {
       {/* Navigation Bar */}
       <nav>
         <Link to="/">Home</Link> - 
+        <Link to="/about">About</Link> -
+        <Link to="/example-page">Example</Link> -
         
 
       
@@ -98,7 +102,9 @@ export default function App() {
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<Home />} />
-      
+        <Route path="/about" element={<About />} />
+        <Route path="/example-page" element={<Example />} />
+
         <Route path="/login" element={<Login />} />
 
         {/* Logged-in users */}
