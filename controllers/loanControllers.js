@@ -170,7 +170,8 @@ exports.returnEquipment = async (req, res) => {
   let connection;
   let transactionStarted = false;
   try {
-    const activeID = req.params.id;
+    // Identify the specific loan selected by staff for check-in.
+    const loanId = req.params.id;
     const condition = req.body.condition;
     // Validate the return condition before opening a database transaction.
     // Reject missing or non-string values to prevent toLowerCase() errors.
@@ -184,9 +185,10 @@ exports.returnEquipment = async (req, res) => {
     await connection.beginTransaction();
     transactionStarted = true;
 
+    // Lock the selected active loan to prevent concurrent returns.
     const [loanRows] = await connection.query(
-      "SELECT * FROM loans WHERE active_equipment_id = ? FOR UPDATE",
-      [activeID],
+      "SELECT * FROM loans WHERE id = ? AND return_date IS NULL FOR UPDATE",
+      [loanId],
     );
 
     if (loanRows.length === 0) {
@@ -196,6 +198,9 @@ exports.returnEquipment = async (req, res) => {
         message: "No active loans with the id provided.",
       });
     }
+
+    // Retrieve the equipment ID associated with the selected active loan.
+    const equipmentId = loanRows[0].equipment_id;
 
     if (
       condition.toLowerCase() !== "damaged" &&
@@ -223,16 +228,18 @@ exports.returnEquipment = async (req, res) => {
                  status = 'available', 
                  equipment_condition = ? 
              WHERE id = ?`,
-      [condition.toLowerCase(), activeID],
+      [condition.toLowerCase(), equipmentId],
     );
 
+    // Complete the selected loan by recording its return date.
+    // The generated active_equipment_id becomes NULL automatically.
     await connection.execute(
       `UPDATE loans
-             SET 
-                 return_date = NOW(), 
-                 return_condition = ? 
-             WHERE active_equipment_id = ?`,
-      [condition.toLowerCase(), activeID],
+         SET
+             return_date = NOW(),
+             return_condition = ?
+         WHERE id = ? AND return_date IS NULL`,
+      [condition.toLowerCase(), loanId],
     );
 
     await connection.commit();

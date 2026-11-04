@@ -239,7 +239,8 @@ describe("Test for loanControllers.js", () => {
 
     const req = {
       params: {
-        id: 19,
+        // Use a nonexistent loan ID to verify the 404 response.
+        id: 999,
       },
       body: {
         condition: "good",
@@ -281,7 +282,8 @@ describe("Test for loanControllers.js", () => {
 
     const req = {
       params: {
-        id: 19,
+        // Identify the loan using its primary key, not the equipment ID.
+        id: 612,
       },
       body: {
         condition: "goo",
@@ -327,7 +329,8 @@ describe("Test for loanControllers.js", () => {
 
     const req = {
       params: {
-        id: 19,
+        // Identify the loan using its primary key, not the equipment ID.
+        id: 612,
       },
       body: {
         condition: "good",
@@ -340,6 +343,27 @@ describe("Test for loanControllers.js", () => {
     const body = res.json.mock.calls[0][0];
     expect(res.status).toHaveBeenCalledWith(200);
     expect(body).toEqual({ message: "Equipment returned successfully!" });
+
+    // Retrieve the mocked database connection used during check-in.
+    const connection = await db.getConnection();
+
+    // Verify the equipment record was updated using the equipment ID.
+    expect(connection.execute).toHaveBeenCalledWith(
+      expect.stringContaining("UPDATE equipment"),
+      ["good", 19],
+    );
+
+    // Verify the loan was completed using its primary key.
+    expect(connection.execute).toHaveBeenCalledWith(
+      expect.stringContaining("UPDATE loans"),
+      ["good", 612],
+    );
+
+    // Verify both updates were committed successfully.
+    expect(connection.commit).toHaveBeenCalledTimes(1);
+
+    // Verify the database connection was released.
+    expect(connection.release).toHaveBeenCalledTimes(1);
   });
 
   test("checkoutEquipment throws 404 for equipment not found", async () => {
