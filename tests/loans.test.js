@@ -6,6 +6,7 @@ const {
   getEquipmentHistory,
   returnEquipment,
   checkoutEquipment,
+  getActiveLoans,
 } = require("../controllers/loanControllers");
 
 const db = require("../db");
@@ -507,5 +508,53 @@ describe("Test for loanControllers.js", () => {
     const body = res.json.mock.calls[0][0];
     expect(res.status).toHaveBeenCalledWith(200);
     expect(body).toEqual({ message: "Equipment checked out successfully!" });
+  });
+
+  test("getActiveLoans returns active loans with equipment and borrower details", async () => {
+    // Simulate an active loan returned by the database.
+    const activeLoans = [
+      {
+        id: 612,
+        borrower_id: 25,
+        equipment_id: 19,
+        checkout_date: "2026-10-23 00:00:00",
+        due_date: "2026-11-27 00:00:00",
+        equipment_name: "Laptop",
+        asset_tag: "LAP-019",
+        borrower_name: "John Doe",
+      },
+    ];
+
+    db.query.mockResolvedValueOnce([activeLoans]);
+
+    const req = {};
+    const res = makeMockRes();
+
+    await getActiveLoans(req, res);
+
+    // Verify successful retrieval and the expected loan details.
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(activeLoans);
+
+    // Verify that only loans without a return date are requested.
+    expect(db.query).toHaveBeenCalledWith(
+      expect.stringContaining("WHERE l.return_date IS NULL"),
+    );
+  });
+
+  test("getActiveLoans returns 500 when the database query fails", async () => {
+    // Simulate a database failure during active-loan retrieval.
+    db.query.mockRejectedValueOnce(new Error("Database connection failed"));
+
+    const req = {};
+    const res = makeMockRes();
+
+    await getActiveLoans(req, res);
+
+    // Verify that database errors do not expose internal details.
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({
+      message: "An internal server error occurred.",
+    });
   });
 });

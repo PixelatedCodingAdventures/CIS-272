@@ -130,6 +130,42 @@ exports.checkoutEquipment = async (req, res) => {
   }
 };
 
+/**
+ * Retrieve all active equipment loans for authorized staff.
+ * A loan remains active until its return_date is recorded.
+ */
+exports.getActiveLoans = async (req, res) => {
+  try {
+    // Retrieve active loans along with equipment and borrower details.
+    // Only loans without a return date are eligible for check-in.
+    const [loans] = await pool.query(
+      `SELECT
+         l.id,
+         l.borrower_id,
+         l.equipment_id,
+         l.checkout_date,
+         l.due_date,
+         e.name AS equipment_name,
+         e.asset_tag,
+         u.name AS borrower_name
+       FROM loans AS l
+       INNER JOIN equipment AS e ON l.equipment_id = e.id
+       INNER JOIN users AS u ON l.borrower_id = u.id
+       WHERE l.return_date IS NULL
+       ORDER BY l.checkout_date ASC`,
+    );
+
+    // Return the active loans, including an empty list if none exist.
+    return res.status(200).json(loans);
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      message: "An internal server error occurred.",
+    });
+  }
+};
+
 exports.returnEquipment = async (req, res) => {
   let connection;
   let transactionStarted = false;
