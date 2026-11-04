@@ -19,7 +19,7 @@ import AddEquipment from './AddEquipment';
 import ViewEquipment from './ViewEquipment';
 import Login from './Login';
 import Logout from './Logout';
-
+import OverdueEquipment from "./OverdueEquipment";
 import './App.css';
 
 // Protect routes that require login
@@ -96,6 +96,9 @@ export default function App() {
               <Link to="/add-user">Add User</Link> -
               <Link to="/view-users">View Users</Link> -
               <Link to="/add-equipment">Add Equipment</Link> -
+              <Link to="/overdue-equipment">Overdue Equipment</Link> -
+
+   
             </>
           )}
 
@@ -156,6 +159,15 @@ export default function App() {
           element={
             <StaffRoute>
               <AddUser />
+            </StaffRoute>
+          }
+        />
+
+        <Route
+          path="/overdue-equipment"
+          element={
+            <StaffRoute>
+              <OverdueEquipment />
             </StaffRoute>
           }
         />
