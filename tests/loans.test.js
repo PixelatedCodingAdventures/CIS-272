@@ -13,6 +13,14 @@ const db = require("../db");
 const makeMockRes = require("../helpers/makeMockRes");
 jest.mock("../db");
 
+// Generate a future due date so checkout tests remain valid over time.
+// This prevents tests from failing when a hardcoded date expires.
+const getFutureDueDate = () => {
+  const date = new Date();
+  date.setUTCDate(date.getUTCDate() + 30);
+  return date.toISOString().slice(0, 10);
+};
+
 describe("Test for loanControllers.js", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -381,7 +389,7 @@ describe("Test for loanControllers.js", () => {
       body: {
         equipment_id: 19,
         borrower_id: 25,
-        due_date: "2026-11-05",
+        due_date: getFutureDueDate(),
       },
     };
 
@@ -422,7 +430,7 @@ describe("Test for loanControllers.js", () => {
         equipment_id: 19,
         borrower_id: 25,
         // Use a valid future due date to test the equipment availability check.
-        due_date: "2026-11-05",
+        due_date: getFutureDueDate(),
       },
     };
 
@@ -465,7 +473,7 @@ describe("Test for loanControllers.js", () => {
         equipment_id: 19,
         borrower_id: 25,
         // Use a valid future due date so the test reaches borrower validation.
-        due_date: "2026-11-05",
+        due_date: getFutureDueDate(),
       },
     };
 
@@ -522,7 +530,7 @@ describe("Test for loanControllers.js", () => {
         equipment_id: 19,
         borrower_id: 25,
         // Use a valid future due date to test a successful equipment checkout.
-        due_date: "2026-11-05",
+        due_date: getFutureDueDate(),
       },
     };
 
