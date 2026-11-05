@@ -21,6 +21,7 @@ import Login from './Login';
 import Logout from './Logout';
 import Checkout from './Checkout';
 
+import OverdueEquipment from "./OverdueEquipment";
 import './App.css';
 
 // Protect routes that require login
@@ -98,6 +99,9 @@ export default function App() {
               <Link to="/view-users">View Users</Link> -
               <Link to="/add-equipment">Add Equipment</Link> -
               <Link to="/checkout-equipment">Equipment Checkout</Link> -
+              <Link to="/overdue-equipment">Overdue Equipment</Link> -
+
+   
             </>
           )}
 
@@ -158,6 +162,15 @@ export default function App() {
           element={
             <StaffRoute>
               <AddUser />
+            </StaffRoute>
+          }
+        />
+
+        <Route
+          path="/overdue-equipment"
+          element={
+            <StaffRoute>
+              <OverdueEquipment />
             </StaffRoute>
           }
         />
