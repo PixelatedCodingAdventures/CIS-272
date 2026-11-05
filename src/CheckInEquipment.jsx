@@ -10,6 +10,8 @@ export default function CheckInEquipment() {
   const [selectedLoan, setSelectedLoan] = useState(null);
   // Track the return condition required by the existing backend.
   const [condition, setCondition] = useState("");
+  // Optional notes describing the equipment's condition at check-in.
+  const [conditionNotes, setConditionNotes] = useState("");
 
   // Prevent duplicate submissions while processing a return.
   const [submitting, setSubmitting] = useState(false);
@@ -66,7 +68,7 @@ export default function CheckInEquipment() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ condition }),
+          body: JSON.stringify({ condition, conditionNotes }),
         },
       );
 
@@ -81,6 +83,8 @@ export default function CheckInEquipment() {
 
       // Reset the form after a successful return.
       setSelectedLoan(null);
+      // Clear the optional notes after a successful check-in.
+      setConditionNotes("");
       setCondition("");
 
       setSuccess("Equipment checked in successfully!");
@@ -166,13 +170,24 @@ export default function CheckInEquipment() {
               onChange={(e) => setCondition(e.target.value)}
               disabled={submitting}
             >
-              <option value="">Select condition</option>
-              <option value="excellent">Excellent</option>
-              <option value="good">Good</option>
-              <option value="fair">Fair</option>
-              <option value="poor">Poor</option>
+              <option value="">Select return condition</option>
+              <option value="working">Working</option>
               <option value="damaged">Damaged</option>
+              <option value="missing_parts">Missing Parts</option>
             </select>
+
+            <div>
+              <label htmlFor="condition-notes">
+                Condition Notes (Optional)
+              </label>
+              <textarea
+                id="condition-notes"
+                value={conditionNotes}
+                onChange={(e) => setConditionNotes(e.target.value)}
+                placeholder="Describe any damage, missing parts, or other issues..."
+                rows={3}
+              />
+            </div>
           </div>
 
           <button

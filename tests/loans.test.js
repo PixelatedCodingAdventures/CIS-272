@@ -304,8 +304,7 @@ describe("Test for loanControllers.js", () => {
     const body = res.json.mock.calls[0][0];
     expect(res.status).toHaveBeenCalledWith(406);
     expect(body).toEqual({
-      message:
-        "Invalid condition. Condition must be damaged, poor, fair, good or excellent.",
+      message: "Invalid return condition.",
     });
   });
   test("returnEquipment returns checked out equipment", async () => {
@@ -362,15 +361,237 @@ describe("Test for loanControllers.js", () => {
     );
 
     // Verify the loan was completed using its primary key.
+    // No condition notes were supplied, so the database receives NULL.
     expect(connection.execute).toHaveBeenCalledWith(
       expect.stringContaining("UPDATE loans"),
-      ["good", 612],
+      ["good", null, 612],
     );
 
     // Verify both updates were committed successfully.
     expect(connection.commit).toHaveBeenCalledTimes(1);
 
     // Verify the database connection was released.
+    expect(connection.release).toHaveBeenCalledTimes(1);
+  });
+
+  test("returnEquipment records missing parts and condition notes", async () => {
+    // Simulate an active loan for equipment being returned.
+    const connection = {
+      beginTransaction: jest.fn(),
+      commit: jest.fn(),
+      rollback: jest.fn(),
+      release: jest.fn(),
+      query: jest.fn().mockResolvedValueOnce([
+        [
+          {
+            id: 613,
+            borrower_id: 25,
+            equipment_id: 20,
+            return_date: null,
+          },
+        ],
+      ]),
+      execute: jest.fn(),
+    };
+
+    db.getConnection = jest.fn().mockResolvedValue(connection);
+
+    const req = {
+      params: { id: 613 },
+      body: {
+        condition: "missing_parts",
+        conditionNotes: "Power adapter is missing.",
+      },
+    };
+
+    const res = makeMockRes();
+
+    await returnEquipment(req, res);
+
+    // Confirm the check-in succeeded.
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Equipment returned successfully!",
+    });
+
+    // The equipment table does not support "missing_parts".
+    // Its existing equipment condition must therefore be preserved.
+    expect(connection.execute).toHaveBeenCalledWith(
+      expect.stringContaining("UPDATE equipment"),
+      [null, 20],
+    );
+
+    // The loan records the exact return condition and optional notes.
+    expect(connection.execute).toHaveBeenCalledWith(
+      expect.stringContaining("UPDATE loans"),
+      ["missing_parts", "Power adapter is missing.", 613],
+    );
+
+    // Both updates must complete within the transaction.
+    expect(connection.commit).toHaveBeenCalledTimes(1);
+    expect(connection.rollback).not.toHaveBeenCalled();
+    expect(connection.release).toHaveBeenCalledTimes(1);
+  });
+
+  test("returnEquipment accepts working condition without notes", async () => {
+    // Simulate an active loan being returned in working condition.
+    const connection = {
+      beginTransaction: jest.fn(),
+      commit: jest.fn(),
+      rollback: jest.fn(),
+      release: jest.fn(),
+      query: jest.fn().mockResolvedValueOnce([
+        [
+          {
+            id: 614,
+            borrower_id: 25,
+            equipment_id: 21,
+            return_date: null,
+          },
+        ],
+      ]),
+      execute: jest.fn(),
+    };
+
+    db.getConnection = jest.fn().mockResolvedValue(connection);
+
+    const req = {
+      params: { id: 614 },
+      body: {
+        condition: "working",
+      },
+    };
+
+    const res = makeMockRes();
+
+    await returnEquipment(req, res);
+
+    // Verify the check-in succeeded.
+    expect(res.status).toHaveBeenCalledWith(200);
+
+    // "working" is not an equipment_condition ENUM value,
+    // so the equipment's existing condition must be preserved.
+    expect(connection.execute).toHaveBeenCalledWith(
+      expect.stringContaining("UPDATE equipment"),
+      [null, 21],
+    );
+
+    // Verify the loan records "working" with NULL notes.
+    expect(connection.execute).toHaveBeenCalledWith(
+      expect.stringContaining("UPDATE loans"),
+      ["working", null, 614],
+    );
+
+    // Verify the transaction completed successfully.
+    expect(connection.commit).toHaveBeenCalledTimes(1);
+    expect(connection.rollback).not.toHaveBeenCalled();
+    expect(connection.release).toHaveBeenCalledTimes(1);
+  });
+
+  test("returnEquipment records damaged condition and notes", async () => {
+    // Simulate an active loan for equipment returned damaged.
+    const connection = {
+      beginTransaction: jest.fn(),
+      commit: jest.fn(),
+      rollback: jest.fn(),
+      release: jest.fn(),
+      query: jest.fn().mockResolvedValueOnce([
+        [
+          {
+            id: 615,
+            borrower_id: 25,
+            equipment_id: 22,
+            return_date: null,
+          },
+        ],
+      ]),
+      execute: jest.fn(),
+    };
+
+    db.getConnection = jest.fn().mockResolvedValue(connection);
+
+    const req = {
+      params: { id: 615 },
+      body: {
+        condition: "damaged",
+        conditionNotes: "Screen cracked during checkout.",
+      },
+    };
+
+    const res = makeMockRes();
+
+    await returnEquipment(req, res);
+
+    // Verify the check-in succeeded.
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Equipment returned successfully!",
+    });
+
+    // "damaged" is supported by the equipment_condition ENUM.
+    expect(connection.execute).toHaveBeenCalledWith(
+      expect.stringContaining("UPDATE equipment"),
+      ["damaged", 22],
+    );
+
+    // Verify both the return condition and notes are recorded.
+    expect(connection.execute).toHaveBeenCalledWith(
+      expect.stringContaining("UPDATE loans"),
+      ["damaged", "Screen cracked during checkout.", 615],
+    );
+
+    // Verify the transaction completed successfully.
+    expect(connection.commit).toHaveBeenCalledTimes(1);
+    expect(connection.rollback).not.toHaveBeenCalled();
+    expect(connection.release).toHaveBeenCalledTimes(1);
+  });
+
+  test("returnEquipment rejects non-text condition notes", async () => {
+    // Simulate an active loan before validating condition notes.
+    const connection = {
+      beginTransaction: jest.fn(),
+      commit: jest.fn(),
+      rollback: jest.fn(),
+      release: jest.fn(),
+      query: jest.fn().mockResolvedValueOnce([
+        [
+          {
+            id: 616,
+            borrower_id: 25,
+            equipment_id: 23,
+            return_date: null,
+          },
+        ],
+      ]),
+      execute: jest.fn(),
+    };
+
+    db.getConnection = jest.fn().mockResolvedValue(connection);
+
+    const req = {
+      params: { id: 616 },
+      body: {
+        condition: "damaged",
+        conditionNotes: 12345, // Invalid: notes must be text.
+      },
+    };
+
+    const res = makeMockRes();
+
+    await returnEquipment(req, res);
+
+    // Verify the request is rejected.
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Condition notes must be text.",
+    });
+
+    // No equipment or loan records should be updated.
+    expect(connection.execute).not.toHaveBeenCalled();
+
+    // Verify the transaction is rolled back and the connection released.
+    expect(connection.rollback).toHaveBeenCalledTimes(1);
+    expect(connection.commit).not.toHaveBeenCalled();
     expect(connection.release).toHaveBeenCalledTimes(1);
   });
 
