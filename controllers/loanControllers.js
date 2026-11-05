@@ -269,24 +269,32 @@ exports.returnEquipment = async (req, res) => {
   }
 };
 
+
+
 exports.getOverdueLoans = async (req, res) => {
   try {
-    const output = await pool.query(
-      `SELECT *
-            FROM loans
-            WHERE due_date < NOW()
-            AND return_date IS NULL
-            ORDER BY due_date ASC;`,
+    const [rows] = await pool.query(
+      `SELECT
+          l.*,
+          e.name AS equipment_name,
+          DATEDIFF(CURDATE(), DATE(l.due_date)) AS days_overdue
+       FROM loans l
+       JOIN equipment e ON l.equipment_id = e.id
+       WHERE DATE(l.due_date) < CURDATE()
+         AND l.return_date IS NULL
+       ORDER BY days_overdue DESC, l.id ASC`
     );
 
-    return res.status(200).json(output[0]);
+    return res.status(200).json(rows);
   } catch (error) {
-    console.error(error);
+    console.error("Error retrieving overdue loans:", error);
+
     return res.status(500).json({
       message: "An internal server error occurred.",
     });
   }
 };
+
 
 exports.getEquipmentHistory = async (req, res) => {
   try {

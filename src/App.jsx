@@ -12,11 +12,14 @@ import AddEquipment from "./AddEquipment";
 import ViewEquipment from "./ViewEquipment";
 import Login from "./Login";
 import Logout from "./Logout";
+
+// Sprint 3 features: equipment check-in and overdue tracking.
 import CheckInEquipment from "./CheckInEquipment";
+import OverdueEquipment from "./OverdueEquipment";
 
 import "./App.css";
 
-// Protect routes that require login
+// Protect routes that require login.
 function ProtectedRoute({ children }) {
   const { user, loading } = useUser();
 
@@ -31,7 +34,7 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
-// Protect routes that require staff permissions
+// Restrict staff functionality to authorized roles.
 function StaffRoute({ children }) {
   const { user, loading } = useUser();
 
@@ -50,6 +53,7 @@ function StaffRoute({ children }) {
   return children;
 }
 
+// Restrict borrower loan information to borrower accounts.
 function BorrowerRoute({ children }) {
   const { user, loading } = useUser();
 
@@ -75,20 +79,20 @@ export default function App() {
     <BrowserRouter>
       {/* Navigation Bar */}
       <nav>
-        <Link to="/">Home</Link> -<Link to="/about">About</Link> -
-        <Link to="/example-page">Example</Link> -
+        <Link to="/">Home</Link> - <Link to="/about">About</Link> -{" "}
+        <Link to="/example-page">Example</Link> -{" "}
         {!loading && ["lab_staff", "department_lead"].includes(user?.role) && (
           <>
-            <Link to="/add-user">Add User</Link> -
-            <Link to="/view-users">View Users</Link> -
-            <Link to="/add-equipment">Add Equipment</Link> -
-            {/* Staff can access the equipment check-in workflow. */}
-            <Link to="/check-in-equipment">Check In Equipment</Link> -
+            <Link to="/add-user">Add User</Link> -{" "}
+            <Link to="/view-users">View Users</Link> -{" "}
+            <Link to="/add-equipment">Add Equipment</Link> -{" "}
+            <Link to="/overdue-equipment">Overdue Equipment</Link> -{" "}
+            <Link to="/check-in-equipment">Check In Equipment</Link> -{" "}
           </>
         )}
         {!loading && user && (
           <>
-            <Link to="/view-equipment">View Equipment</Link> -
+            <Link to="/view-equipment">View Equipment</Link> -{" "}
           </>
         )}
         {!loading &&
@@ -99,7 +103,8 @@ export default function App() {
           ))}
         {!loading && user?.role === "borrower" && (
           <>
-            <Link to="/my-loans">My Loans</Link> -
+            {" "}
+            - <Link to="/my-loans">My Loans</Link>
           </>
         )}
       </nav>
@@ -110,10 +115,9 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/example-page" element={<Example />} />
-
         <Route path="/login" element={<Login />} />
 
-        {/* Logged-in users */}
+        {/* Routes available to authenticated users */}
         <Route
           path="/view-equipment"
           element={
@@ -132,7 +136,7 @@ export default function App() {
           }
         />
 
-        {/* Staff only */}
+        {/* Staff-only routes */}
         <Route
           path="/add-user"
           element={
@@ -160,6 +164,17 @@ export default function App() {
           }
         />
 
+        {/* Cristian's overdue equipment feature */}
+        <Route
+          path="/overdue-equipment"
+          element={
+            <StaffRoute>
+              <OverdueEquipment />
+            </StaffRoute>
+          }
+        />
+
+        {/* Staff equipment check-in feature */}
         <Route
           path="/check-in-equipment"
           element={
@@ -169,6 +184,7 @@ export default function App() {
           }
         />
 
+        {/* Borrower-only routes */}
         <Route
           path="/my-loans"
           element={
