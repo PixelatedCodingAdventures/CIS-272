@@ -67,7 +67,7 @@ describe("Test for loanControllers.js", () => {
           borrower_id: 579,
           equipment_id: 19,
           checkout_date: "2026-09-20 00:00:00",
-          due_date: "2026-10-05 00:00:00",
+          due_date: "2026-12-16 00:00:00",
           return_date: null,
           return_condition: null,
           active_equipment_id: 19,
@@ -77,7 +77,7 @@ describe("Test for loanControllers.js", () => {
           borrower_id: 975,
           equipment_id: 20,
           checkout_date: "2026-09-30 00:00:00",
-          due_date: "2026-10-15 00:00:00",
+          due_date: "2026-12-16 00:00:00",
           return_date: null,
           return_condition: null,
           active_equipment_id: 20,
@@ -91,7 +91,7 @@ describe("Test for loanControllers.js", () => {
         borrower_id: 579,
         equipment_id: 19,
         checkout_date: "2026-09-20 00:00:00",
-        due_date: "2026-10-05 00:00:00",
+        due_date: "2026-12-16 00:00:00",
         return_date: null,
         return_condition: null,
         active_equipment_id: 19,
@@ -101,7 +101,7 @@ describe("Test for loanControllers.js", () => {
         borrower_id: 975,
         equipment_id: 20,
         checkout_date: "2026-09-30 00:00:00",
-        due_date: "2026-10-15 00:00:00",
+        due_date: "2026-12-16 00:00:00",
         return_date: null,
         return_condition: null,
         active_equipment_id: 20,
@@ -356,7 +356,7 @@ describe("Test for loanControllers.js", () => {
       body: {
         equipment_id: 19,
         borrower_id: 25,
-        due_date: "2026-11-05",
+        due_date: "2026-12-16",
       },
     };
 
@@ -397,7 +397,7 @@ describe("Test for loanControllers.js", () => {
         equipment_id: 19,
         borrower_id: 25,
         // Use a valid future due date to test the equipment availability check.
-        due_date: "2026-11-05",
+        due_date: "2026-12-16",
       },
     };
 
@@ -440,7 +440,7 @@ describe("Test for loanControllers.js", () => {
         equipment_id: 19,
         borrower_id: 25,
         // Use a valid future due date so the test reaches borrower validation.
-        due_date: "2026-11-05",
+        due_date: "2026-12-16",
       },
     };
 
@@ -497,7 +497,7 @@ describe("Test for loanControllers.js", () => {
         equipment_id: 19,
         borrower_id: 25,
         // Use a valid future due date to test a successful equipment checkout.
-        due_date: "2026-11-05",
+        due_date: "2026-12-16",
       },
     };
 
