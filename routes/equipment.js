@@ -31,6 +31,7 @@ router.post("/", requireRole(ROLES.LAB_STAFF, ROLES.DEPARTMENT_LEAD), async (req
             name,
             asset_tag,
             description,
+            location,
             status = "available",
             equipment_condition = "good"
         } = req.body;
@@ -87,12 +88,13 @@ router.post("/", requireRole(ROLES.LAB_STAFF, ROLES.DEPARTMENT_LEAD), async (req
 
         const [result] = await pool.execute(
             `INSERT INTO equipment
-             (name, asset_tag, description, status, equipment_condition)
-             VALUES (?, ?, ?, ?, ?)`,
+             (name, asset_tag, description, location, status, equipment_condition)
+             VALUES (?, ?, ?, ?, ?, ?)`,
             [
                 name.trim(),
                 asset_tag.trim(),
                 description || null,
+                location || null,
                 status,
                 equipment_condition
             ]
@@ -146,6 +148,7 @@ router.get("/", async (req, res) => {
                 name,
                 asset_tag,
                 description,
+                location,
                 status,
                 equipment_condition,
                 created_at,
@@ -176,6 +179,7 @@ router.put("/:id",requireRole(ROLES.LAB_STAFF, ROLES.DEPARTMENT_LEAD), async (re
             name,
             asset_tag,
             description,
+            location,
             status,
             equipment_condition
         } = req.body;
@@ -201,6 +205,7 @@ router.put("/:id",requireRole(ROLES.LAB_STAFF, ROLES.DEPARTMENT_LEAD), async (re
              SET name = ?,
                  asset_tag = ?,
                  description = ?,
+                 location = ?,
                  status = ?,
                  equipment_condition = ?
              WHERE id = ?`,
@@ -208,6 +213,7 @@ router.put("/:id",requireRole(ROLES.LAB_STAFF, ROLES.DEPARTMENT_LEAD), async (re
                 name.trim(),
                 asset_tag.trim(),
                 description || null,
+                location || null,
                 status,
                 equipment_condition,
                 id

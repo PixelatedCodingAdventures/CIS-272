@@ -6,6 +6,7 @@ const AddEquipment = () => {
         name: "",
         asset_tag: "",
         description: "",
+        location: "",
         status: "available",
         equipment_condition: "good"
     });
@@ -57,6 +58,7 @@ const AddEquipment = () => {
                 name: "",
                 asset_tag: "",
                 description: "",
+                location: "",
                 status: "available",
                 equipment_condition: "good"
             });
@@ -113,6 +115,18 @@ const AddEquipment = () => {
                         value={formData.description}
                         onChange={handleChange}
                         rows={4}
+                    />
+                </div>
+
+                <div>
+                    <label>Location:</label>
+                    <input
+                        type="text"
+                        name="location"
+                        value={formData.location}
+                        onChange={handleChange}
+                        maxLength={255}
+                        placeholder="Optional"
                     />
                 </div>
 

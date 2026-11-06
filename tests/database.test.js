@@ -18,7 +18,7 @@ describe("Database schema and migrations", () => {
     );
   });
 
-  // Verify that all four migration files were recorded.
+  // Verify that all database migrations are recorded.
   test("All database migrations are tracked", async () => {
     const [rows] = await pool.query(
       "SELECT filename FROM schema_migrations ORDER BY filename",
@@ -32,6 +32,8 @@ describe("Database schema and migrations", () => {
         "002_create_users.sql",
         "003_create_equipment.sql",
         "004_create_loans.sql",
+        "005_add_admin_user.sql",
+        "006_add_equipment_location.sql",
       ]),
     );
   });

@@ -74,6 +74,7 @@ useEffect(() => {
                         name: editData.name,
                         asset_tag: editData.asset_tag,
                         description: editData.description,
+                        location: editData.location,
                         status: editData.status,
                         equipment_condition:
                             editData.equipment_condition
@@ -178,6 +179,7 @@ useEffect(() => {
                         <th>Name</th>
                         <th>Asset Tag</th>
                         <th>Description</th>
+                        <th>Location</th>
                         <th>Status</th>
                         <th>Condition</th>
                         <th>Actions</th>
@@ -224,6 +226,20 @@ useEffect(() => {
                                     />
                                 ) : (
                                     item.description || "N/A"
+                                )}
+                            </td>
+
+                            <td>
+                                {editingId === item.id ? (
+                                    <input
+                                        type="text"
+                                        name="location"
+                                        value={editData.location || ""}
+                                        onChange={handleChange}
+                                        maxLength={255}
+                                    />
+                                ) : (
+                                    item.location || "Location not assigned"
                                 )}
                             </td>
 
