@@ -57,8 +57,8 @@ describe("Equipment Management CRUD Tests", () => {
 
       // INSERT equipment
       if (normalized.startsWith("INSERT INTO EQUIPMENT")) {
-        const [name, asset_tag, description, status, equipment_condition] =
-          params;
+        // Match the equipment API's INSERT parameter order.
+        const [ name, asset_tag, description, location, status, equipment_condition, ] = params;
 
         // Check duplicate asset tag
         if (mockEquipment.some((item) => item.asset_tag === asset_tag)) {
@@ -72,6 +72,7 @@ describe("Equipment Management CRUD Tests", () => {
           name,
           asset_tag,
           description,
+          location,
           status,
           equipment_condition,
         };
@@ -132,11 +133,13 @@ describe("Equipment Management CRUD Tests", () => {
           return [{ affectedRows: 0 }, []];
         }
 
+        // Match the equipment API's UPDATE parameter order.
         equipment.name = params[0];
         equipment.asset_tag = params[1];
         equipment.description = params[2];
-        equipment.status = params[3];
-        equipment.equipment_condition = params[4];
+        equipment.location = params[3];
+        equipment.status = params[4];
+        equipment.equipment_condition = params[5];
 
         return [{ affectedRows: 1 }, []];
       }
