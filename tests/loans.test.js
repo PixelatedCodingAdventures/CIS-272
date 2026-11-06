@@ -6,18 +6,18 @@ const {
   getEquipmentHistory,
   returnEquipment,
   checkoutEquipment,
+  getActiveLoans,
 } = require("../controllers/loanControllers");
 
 const db = require("../db");
 const makeMockRes = require("../helpers/makeMockRes");
 
-function getFutureDate(days = 30) {
+function getFutureDate(days = 60) {
   const date = new Date();
   date.setUTCDate(date.getUTCDate() + days);
 
   return date.toISOString().split("T")[0];
 }
-
 
 jest.mock("../db");
 
@@ -76,7 +76,7 @@ describe("Test for loanControllers.js", () => {
           borrower_id: 579,
           equipment_id: 19,
           checkout_date: "2026-09-20 00:00:00",
-          due_date: getFutureDate(30),
+          due_date: getFutureDate(60),
           return_date: null,
           return_condition: null,
           active_equipment_id: 19,
@@ -86,7 +86,7 @@ describe("Test for loanControllers.js", () => {
           borrower_id: 975,
           equipment_id: 20,
           checkout_date: "2026-09-30 00:00:00",
-          due_date: getFutureDate(30),
+          due_date: getFutureDate(60),
           return_date: null,
           return_condition: null,
           active_equipment_id: 20,
@@ -100,7 +100,7 @@ describe("Test for loanControllers.js", () => {
         borrower_id: 579,
         equipment_id: 19,
         checkout_date: "2026-09-20 00:00:00",
-        due_date: getFutureDate(30),
+        due_date: getFutureDate(60),
         return_date: null,
         return_condition: null,
         active_equipment_id: 19,
@@ -110,7 +110,7 @@ describe("Test for loanControllers.js", () => {
         borrower_id: 975,
         equipment_id: 20,
         checkout_date: "2026-09-30 00:00:00",
-        due_date: getFutureDate(30),
+        due_date: getFutureDate(60),
         return_date: null,
         return_condition: null,
         active_equipment_id: 20,
@@ -183,7 +183,7 @@ describe("Test for loanControllers.js", () => {
         borrower_id: 579,
         equipment_id: 19,
         checkout_date: "2026-09-20 00:00:00",
-        due_date: getFutureDate(30),
+        due_date: getFutureDate(60),
         return_date: null,
         return_condition: null,
         active_equipment_id: 19,
@@ -212,7 +212,7 @@ describe("Test for loanControllers.js", () => {
             borrower_id: 579,
             equipment_id: 19,
             checkout_date: "2026-09-20 00:00:00",
-            due_date: getFutureDate(30),
+            due_date: getFutureDate(60),
             return_date: null,
             return_condition: null,
             active_equipment_id: 19,
@@ -247,7 +247,8 @@ describe("Test for loanControllers.js", () => {
 
     const req = {
       params: {
-        id: 19,
+        // Use a nonexistent loan ID to verify the 404 response.
+        id: 999,
       },
       body: {
         condition: "good",
@@ -274,7 +275,7 @@ describe("Test for loanControllers.js", () => {
             borrower_id: 25,
             equipment_id: 19,
             checkout_date: "2026-10-23 00:00:00",
-            due_date: getFutureDate(30),
+            due_date: getFutureDate(60),
             return_date: null,
             return_condition: null,
             active_equipment_id: 19,
@@ -289,7 +290,8 @@ describe("Test for loanControllers.js", () => {
 
     const req = {
       params: {
-        id: 19,
+        // Identify the loan using its primary key, not the equipment ID.
+        id: 612,
       },
       body: {
         condition: "goo",
@@ -302,8 +304,7 @@ describe("Test for loanControllers.js", () => {
     const body = res.json.mock.calls[0][0];
     expect(res.status).toHaveBeenCalledWith(406);
     expect(body).toEqual({
-      message:
-        "Invalid condition. Condition must be damaged, poor, fair, good or excellent.",
+      message: "Invalid return condition.",
     });
   });
   test("returnEquipment returns checked out equipment", async () => {
@@ -319,7 +320,7 @@ describe("Test for loanControllers.js", () => {
             borrower_id: 25,
             equipment_id: 19,
             checkout_date: "2026-10-23 00:00:00",
-            due_date: getFutureDate(30),
+            due_date: getFutureDate(60),
             return_date: null,
             return_condition: null,
             active_equipment_id: 19,
@@ -335,7 +336,8 @@ describe("Test for loanControllers.js", () => {
 
     const req = {
       params: {
-        id: 19,
+        // Identify the loan using its primary key, not the equipment ID.
+        id: 612,
       },
       body: {
         condition: "good",
@@ -348,6 +350,249 @@ describe("Test for loanControllers.js", () => {
     const body = res.json.mock.calls[0][0];
     expect(res.status).toHaveBeenCalledWith(200);
     expect(body).toEqual({ message: "Equipment returned successfully!" });
+
+    // Retrieve the mocked database connection used during check-in.
+    const connection = await db.getConnection();
+
+    // Verify the equipment record was updated using the equipment ID.
+    expect(connection.execute).toHaveBeenCalledWith(
+      expect.stringContaining("UPDATE equipment"),
+      ["good", 19],
+    );
+
+    // Verify the loan was completed using its primary key.
+    // No condition notes were supplied, so the database receives NULL.
+    expect(connection.execute).toHaveBeenCalledWith(
+      expect.stringContaining("UPDATE loans"),
+      ["good", null, 612],
+    );
+
+    // Verify both updates were committed successfully.
+    expect(connection.commit).toHaveBeenCalledTimes(1);
+
+    // Verify the database connection was released.
+    expect(connection.release).toHaveBeenCalledTimes(1);
+  });
+
+  test("returnEquipment records missing parts and condition notes", async () => {
+    // Simulate an active loan for equipment being returned.
+    const connection = {
+      beginTransaction: jest.fn(),
+      commit: jest.fn(),
+      rollback: jest.fn(),
+      release: jest.fn(),
+      query: jest.fn().mockResolvedValueOnce([
+        [
+          {
+            id: 613,
+            borrower_id: 25,
+            equipment_id: 20,
+            return_date: null,
+          },
+        ],
+      ]),
+      execute: jest.fn(),
+    };
+
+    db.getConnection = jest.fn().mockResolvedValue(connection);
+
+    const req = {
+      params: { id: 613 },
+      body: {
+        condition: "missing_parts",
+        conditionNotes: "Power adapter is missing.",
+      },
+    };
+
+    const res = makeMockRes();
+
+    await returnEquipment(req, res);
+
+    // Confirm the check-in succeeded.
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Equipment returned successfully!",
+    });
+
+    // The equipment table does not support "missing_parts".
+    // Its existing equipment condition must therefore be preserved.
+    expect(connection.execute).toHaveBeenCalledWith(
+      expect.stringContaining("UPDATE equipment"),
+      [null, 20],
+    );
+
+    // The loan records the exact return condition and optional notes.
+    expect(connection.execute).toHaveBeenCalledWith(
+      expect.stringContaining("UPDATE loans"),
+      ["missing_parts", "Power adapter is missing.", 613],
+    );
+
+    // Both updates must complete within the transaction.
+    expect(connection.commit).toHaveBeenCalledTimes(1);
+    expect(connection.rollback).not.toHaveBeenCalled();
+    expect(connection.release).toHaveBeenCalledTimes(1);
+  });
+
+  test("returnEquipment accepts working condition without notes", async () => {
+    // Simulate an active loan being returned in working condition.
+    const connection = {
+      beginTransaction: jest.fn(),
+      commit: jest.fn(),
+      rollback: jest.fn(),
+      release: jest.fn(),
+      query: jest.fn().mockResolvedValueOnce([
+        [
+          {
+            id: 614,
+            borrower_id: 25,
+            equipment_id: 21,
+            return_date: null,
+          },
+        ],
+      ]),
+      execute: jest.fn(),
+    };
+
+    db.getConnection = jest.fn().mockResolvedValue(connection);
+
+    const req = {
+      params: { id: 614 },
+      body: {
+        condition: "working",
+      },
+    };
+
+    const res = makeMockRes();
+
+    await returnEquipment(req, res);
+
+    // Verify the check-in succeeded.
+    expect(res.status).toHaveBeenCalledWith(200);
+
+    // "working" is not an equipment_condition ENUM value,
+    // so the equipment's existing condition must be preserved.
+    expect(connection.execute).toHaveBeenCalledWith(
+      expect.stringContaining("UPDATE equipment"),
+      [null, 21],
+    );
+
+    // Verify the loan records "working" with NULL notes.
+    expect(connection.execute).toHaveBeenCalledWith(
+      expect.stringContaining("UPDATE loans"),
+      ["working", null, 614],
+    );
+
+    // Verify the transaction completed successfully.
+    expect(connection.commit).toHaveBeenCalledTimes(1);
+    expect(connection.rollback).not.toHaveBeenCalled();
+    expect(connection.release).toHaveBeenCalledTimes(1);
+  });
+
+  test("returnEquipment records damaged condition and notes", async () => {
+    // Simulate an active loan for equipment returned damaged.
+    const connection = {
+      beginTransaction: jest.fn(),
+      commit: jest.fn(),
+      rollback: jest.fn(),
+      release: jest.fn(),
+      query: jest.fn().mockResolvedValueOnce([
+        [
+          {
+            id: 615,
+            borrower_id: 25,
+            equipment_id: 22,
+            return_date: null,
+          },
+        ],
+      ]),
+      execute: jest.fn(),
+    };
+
+    db.getConnection = jest.fn().mockResolvedValue(connection);
+
+    const req = {
+      params: { id: 615 },
+      body: {
+        condition: "damaged",
+        conditionNotes: "Screen cracked during checkout.",
+      },
+    };
+
+    const res = makeMockRes();
+
+    await returnEquipment(req, res);
+
+    // Verify the check-in succeeded.
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Equipment returned successfully!",
+    });
+
+    // "damaged" is supported by the equipment_condition ENUM.
+    expect(connection.execute).toHaveBeenCalledWith(
+      expect.stringContaining("UPDATE equipment"),
+      ["damaged", 22],
+    );
+
+    // Verify both the return condition and notes are recorded.
+    expect(connection.execute).toHaveBeenCalledWith(
+      expect.stringContaining("UPDATE loans"),
+      ["damaged", "Screen cracked during checkout.", 615],
+    );
+
+    // Verify the transaction completed successfully.
+    expect(connection.commit).toHaveBeenCalledTimes(1);
+    expect(connection.rollback).not.toHaveBeenCalled();
+    expect(connection.release).toHaveBeenCalledTimes(1);
+  });
+
+  test("returnEquipment rejects non-text condition notes", async () => {
+    // Simulate an active loan before validating condition notes.
+    const connection = {
+      beginTransaction: jest.fn(),
+      commit: jest.fn(),
+      rollback: jest.fn(),
+      release: jest.fn(),
+      query: jest.fn().mockResolvedValueOnce([
+        [
+          {
+            id: 616,
+            borrower_id: 25,
+            equipment_id: 23,
+            return_date: null,
+          },
+        ],
+      ]),
+      execute: jest.fn(),
+    };
+
+    db.getConnection = jest.fn().mockResolvedValue(connection);
+
+    const req = {
+      params: { id: 616 },
+      body: {
+        condition: "damaged",
+        conditionNotes: 12345, // Invalid: notes must be text.
+      },
+    };
+
+    const res = makeMockRes();
+
+    await returnEquipment(req, res);
+
+    // Verify the request is rejected.
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Condition notes must be text.",
+    });
+
+    // No equipment or loan records should be updated.
+    expect(connection.execute).not.toHaveBeenCalled();
+
+    // Verify the transaction is rolled back and the connection released.
+    expect(connection.rollback).toHaveBeenCalledTimes(1);
+    expect(connection.commit).not.toHaveBeenCalled();
+    expect(connection.release).toHaveBeenCalledTimes(1);
   });
 
   test("checkoutEquipment throws 404 for equipment not found", async () => {
@@ -365,7 +610,7 @@ describe("Test for loanControllers.js", () => {
       body: {
         equipment_id: 19,
         borrower_id: 25,
-        due_date: getFutureDate(30),
+        due_date: getFutureDate(60),
       },
     };
 
@@ -406,7 +651,7 @@ describe("Test for loanControllers.js", () => {
         equipment_id: 19,
         borrower_id: 25,
         // Use a valid future due date to test the equipment availability check.
-        due_date: getFutureDate(30),
+        due_date: getFutureDate(60),
       },
     };
 
@@ -449,7 +694,7 @@ describe("Test for loanControllers.js", () => {
         equipment_id: 19,
         borrower_id: 25,
         // Use a valid future due date so the test reaches borrower validation.
-        due_date: getFutureDate(30),
+        due_date: getFutureDate(60),
       },
     };
 
@@ -506,7 +751,7 @@ describe("Test for loanControllers.js", () => {
         equipment_id: 19,
         borrower_id: 25,
         // Use a valid future due date to test a successful equipment checkout.
-        due_date: getFutureDate(30),
+        due_date: getFutureDate(60),
       },
     };
 
@@ -516,5 +761,53 @@ describe("Test for loanControllers.js", () => {
     const body = res.json.mock.calls[0][0];
     expect(res.status).toHaveBeenCalledWith(200);
     expect(body).toEqual({ message: "Equipment checked out successfully!" });
+  });
+
+  test("getActiveLoans returns active loans with equipment and borrower details", async () => {
+    // Simulate an active loan returned by the database.
+    const activeLoans = [
+      {
+        id: 612,
+        borrower_id: 25,
+        equipment_id: 19,
+        checkout_date: "2026-10-23 00:00:00",
+        due_date: "2026-11-27 00:00:00",
+        equipment_name: "Laptop",
+        asset_tag: "LAP-019",
+        borrower_name: "John Doe",
+      },
+    ];
+
+    db.query.mockResolvedValueOnce([activeLoans]);
+
+    const req = {};
+    const res = makeMockRes();
+
+    await getActiveLoans(req, res);
+
+    // Verify successful retrieval and the expected loan details.
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(activeLoans);
+
+    // Verify that only loans without a return date are requested.
+    expect(db.query).toHaveBeenCalledWith(
+      expect.stringContaining("WHERE l.return_date IS NULL"),
+    );
+  });
+
+  test("getActiveLoans returns 500 when the database query fails", async () => {
+    // Simulate a database failure during active-loan retrieval.
+    db.query.mockRejectedValueOnce(new Error("Database connection failed"));
+
+    const req = {};
+    const res = makeMockRes();
+
+    await getActiveLoans(req, res);
+
+    // Verify that database errors do not expose internal details.
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({
+      message: "An internal server error occurred.",
+    });
   });
 });

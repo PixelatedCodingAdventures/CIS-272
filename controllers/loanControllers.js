@@ -130,12 +130,56 @@ exports.checkoutEquipment = async (req, res) => {
   }
 };
 
+/**
+ * Retrieve all active equipment loans for authorized staff.
+ * A loan remains active until its return_date is recorded.
+ */
+exports.getActiveLoans = async (req, res) => {
+  try {
+    // Retrieve active loans along with equipment and borrower details.
+    // Only loans without a return date are eligible for check-in.
+    const [loans] = await pool.query(
+      `SELECT
+         l.id,
+         l.borrower_id,
+         l.equipment_id,
+         l.checkout_date,
+         l.due_date,
+         e.name AS equipment_name,
+         e.asset_tag,
+         u.name AS borrower_name
+       FROM loans AS l
+       INNER JOIN equipment AS e ON l.equipment_id = e.id
+       INNER JOIN users AS u ON l.borrower_id = u.id
+       WHERE l.return_date IS NULL
+       ORDER BY l.checkout_date ASC`,
+    );
+
+    // Return the active loans, including an empty list if none exist.
+    return res.status(200).json(loans);
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      message: "An internal server error occurred.",
+    });
+  }
+};
+
 exports.returnEquipment = async (req, res) => {
   let connection;
   let transactionStarted = false;
   try {
-    const activeID = req.params.id;
-    const condition = req.body.condition;
+    // Identify the specific loan selected by staff for check-in.
+    const loanId = req.params.id;
+    // Normalize the staff-recorded return condition.
+    const condition =
+      typeof req.body.condition === "string"
+        ? req.body.condition.trim().toLowerCase()
+        : "";
+
+    // Optional notes describing damage, missing parts, or other issues.
+    const conditionNotes = req.body.conditionNotes;
     // Validate the return condition before opening a database transaction.
     // Reject missing or non-string values to prevent toLowerCase() errors.
     if (typeof condition !== "string" || condition.trim() === "") {
@@ -148,9 +192,10 @@ exports.returnEquipment = async (req, res) => {
     await connection.beginTransaction();
     transactionStarted = true;
 
+    // Lock the selected active loan to prevent concurrent returns.
     const [loanRows] = await connection.query(
-      "SELECT * FROM loans WHERE active_equipment_id = ? FOR UPDATE",
-      [activeID],
+      "SELECT * FROM loans WHERE id = ? AND return_date IS NULL FOR UPDATE",
+      [loanId],
     );
 
     if (loanRows.length === 0) {
@@ -161,42 +206,74 @@ exports.returnEquipment = async (req, res) => {
       });
     }
 
-    if (
-      condition.toLowerCase() !== "damaged" &&
-      condition.toLowerCase() !== "poor" &&
-      condition.toLowerCase() !== "fair" &&
-      condition.toLowerCase() !== "good" &&
-      condition.toLowerCase() !== "excellent"
-    ) {
-      // Roll back the active transaction before rejecting an invalid condition.
-      // This releases database locks and prevents an unfinished transaction.
-      await connection.rollback();
+    // Retrieve the equipment ID associated with the selected active loan.
+    const equipmentId = loanRows[0].equipment_id;
 
-      // The transaction has now been rolled back successfully.
+    // Accept existing equipment conditions and the new check-in conditions.
+    const validConditions = [
+      "excellent",
+      "good",
+      "fair",
+      "poor",
+      "damaged",
+      "working",
+      "missing_parts",
+    ];
+
+    if (!validConditions.includes(condition)) {
+      await connection.rollback();
       transactionStarted = false;
 
       return res.status(406).json({
-        message:
-          "Invalid condition. Condition must be damaged, poor, fair, good or excellent.",
+        message: "Invalid return condition.",
       });
     }
 
-    await connection.execute(
-      `UPDATE equipment
-             SET 
-                 status = 'available', 
-                 equipment_condition = ? 
-             WHERE id = ?`,
-      [condition.toLowerCase(), activeID],
-    );
+    // Condition notes are optional, but must be text when provided.
+    if (
+      conditionNotes !== undefined &&
+      conditionNotes !== null &&
+      typeof conditionNotes !== "string"
+    ) {
+      await connection.rollback();
+      transactionStarted = false;
+
+      return res.status(400).json({
+        message: "Condition notes must be text.",
+      });
+    }
+
+    // Preserve the existing equipment condition when the selected
+    // return condition is not supported by the equipment table.
+    const equipmentCondition = [
+      "excellent",
+      "good",
+      "fair",
+      "poor",
+      "damaged",
+    ].includes(condition)
+      ? condition
+      : null;
 
     await connection.execute(
+      `UPDATE equipment
+   SET
+     status = 'available',
+     equipment_condition = COALESCE(?, equipment_condition)
+   WHERE id = ?`,
+      [equipmentCondition, equipmentId],
+    );
+
+    // Record the return date, selected condition, and optional notes.
+    // The generated active_equipment_id becomes NULL automatically.
+    await connection.execute(
       `UPDATE loans
-             SET 
-                 return_date = NOW(), 
-                 return_condition = ? 
-             WHERE active_equipment_id = ?`,
-      [condition.toLowerCase(), activeID],
+   SET
+     return_date = NOW(),
+     return_condition = ?,
+     return_condition_notes = ?
+   WHERE id = ? AND return_date IS NULL`,
+      [condition, conditionNotes?.trim() || null, loanId],
     );
 
     await connection.commit();
@@ -226,8 +303,6 @@ exports.returnEquipment = async (req, res) => {
   }
 };
 
-
-
 exports.getOverdueLoans = async (req, res) => {
   try {
     const [rows] = await pool.query(
@@ -239,7 +314,7 @@ exports.getOverdueLoans = async (req, res) => {
        JOIN equipment e ON l.equipment_id = e.id
        WHERE DATE(l.due_date) < CURDATE()
          AND l.return_date IS NULL
-       ORDER BY days_overdue DESC, l.id ASC`
+       ORDER BY days_overdue DESC, l.id ASC`,
     );
 
     return res.status(200).json(rows);
@@ -251,7 +326,6 @@ exports.getOverdueLoans = async (req, res) => {
     });
   }
 };
-
 
 exports.getEquipmentHistory = async (req, res) => {
   try {
