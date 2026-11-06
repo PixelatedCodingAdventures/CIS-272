@@ -19,6 +19,8 @@ import AddEquipment from './AddEquipment';
 import ViewEquipment from './ViewEquipment';
 import Login from './Login';
 import Logout from './Logout';
+import Checkout from './Checkout';
+
 import OverdueEquipment from "./OverdueEquipment";
 import './App.css';
 
@@ -96,6 +98,7 @@ export default function App() {
               <Link to="/add-user">Add User</Link> -
               <Link to="/view-users">View Users</Link> -
               <Link to="/add-equipment">Add Equipment</Link> -
+              <Link to="/checkout-equipment">Equipment Checkout</Link> -
               <Link to="/overdue-equipment">Overdue Equipment</Link> -
 
    
@@ -189,6 +192,16 @@ export default function App() {
             </StaffRoute>
           }
         />
+        <Route
+          path='/checkout-equipment'
+          element={
+            <StaffRoute>
+              <Checkout />
+            </StaffRoute>
+          }
+        />
+
+        {/* Borrower Protected  */}
         <Route
           path="/my-loans"
           element={
