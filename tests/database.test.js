@@ -1,4 +1,3 @@
-
 const pool = require("../db");
 
 describe("Database schema and migrations", () => {
@@ -33,7 +32,7 @@ describe("Database schema and migrations", () => {
         "003_create_equipment.sql",
         "004_create_loans.sql",
         "005_add_admin_user.sql",
-        "006_add_equipment_location.sql",
+        "010_add_equipment_location.sql",
       ]),
     );
   });
