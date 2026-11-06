@@ -11,15 +11,15 @@ const {
 
 const db = require("../db");
 const makeMockRes = require("../helpers/makeMockRes");
-jest.mock("../db");
 
-// Generate a future due date so checkout tests remain valid over time.
-// This prevents tests from failing when a hardcoded date expires.
-const getFutureDueDate = () => {
+function getFutureDate(days = 60) {
   const date = new Date();
-  date.setUTCDate(date.getUTCDate() + 30);
-  return date.toISOString().slice(0, 10);
-};
+  date.setUTCDate(date.getUTCDate() + days);
+
+  return date.toISOString().split("T")[0];
+}
+
+jest.mock("../db");
 
 describe("Test for loanControllers.js", () => {
   beforeEach(() => {
@@ -76,7 +76,7 @@ describe("Test for loanControllers.js", () => {
           borrower_id: 579,
           equipment_id: 19,
           checkout_date: "2026-09-20 00:00:00",
-          due_date: "2026-10-05 00:00:00",
+          due_date: getFutureDate(60),
           return_date: null,
           return_condition: null,
           active_equipment_id: 19,
@@ -86,7 +86,7 @@ describe("Test for loanControllers.js", () => {
           borrower_id: 975,
           equipment_id: 20,
           checkout_date: "2026-09-30 00:00:00",
-          due_date: "2026-10-15 00:00:00",
+          due_date: getFutureDate(60),
           return_date: null,
           return_condition: null,
           active_equipment_id: 20,
@@ -100,7 +100,7 @@ describe("Test for loanControllers.js", () => {
         borrower_id: 579,
         equipment_id: 19,
         checkout_date: "2026-09-20 00:00:00",
-        due_date: "2026-10-05 00:00:00",
+        due_date: getFutureDate(60),
         return_date: null,
         return_condition: null,
         active_equipment_id: 19,
@@ -110,7 +110,7 @@ describe("Test for loanControllers.js", () => {
         borrower_id: 975,
         equipment_id: 20,
         checkout_date: "2026-09-30 00:00:00",
-        due_date: "2026-10-15 00:00:00",
+        due_date: getFutureDate(60),
         return_date: null,
         return_condition: null,
         active_equipment_id: 20,
@@ -183,7 +183,7 @@ describe("Test for loanControllers.js", () => {
         borrower_id: 579,
         equipment_id: 19,
         checkout_date: "2026-09-20 00:00:00",
-        due_date: "2026-10-05 00:00:00",
+        due_date: getFutureDate(60),
         return_date: null,
         return_condition: null,
         active_equipment_id: 19,
@@ -212,7 +212,7 @@ describe("Test for loanControllers.js", () => {
             borrower_id: 579,
             equipment_id: 19,
             checkout_date: "2026-09-20 00:00:00",
-            due_date: "2026-10-05 00:00:00",
+            due_date: getFutureDate(60),
             return_date: null,
             return_condition: null,
             active_equipment_id: 19,
@@ -275,7 +275,7 @@ describe("Test for loanControllers.js", () => {
             borrower_id: 25,
             equipment_id: 19,
             checkout_date: "2026-10-23 00:00:00",
-            due_date: "2026-11-27 00:00:00",
+            due_date: getFutureDate(60),
             return_date: null,
             return_condition: null,
             active_equipment_id: 19,
@@ -320,7 +320,7 @@ describe("Test for loanControllers.js", () => {
             borrower_id: 25,
             equipment_id: 19,
             checkout_date: "2026-10-23 00:00:00",
-            due_date: "2026-11-27 00:00:00",
+            due_date: getFutureDate(60),
             return_date: null,
             return_condition: null,
             active_equipment_id: 19,
@@ -610,7 +610,7 @@ describe("Test for loanControllers.js", () => {
       body: {
         equipment_id: 19,
         borrower_id: 25,
-        due_date: getFutureDueDate(),
+        due_date: getFutureDate(60),
       },
     };
 
@@ -651,7 +651,7 @@ describe("Test for loanControllers.js", () => {
         equipment_id: 19,
         borrower_id: 25,
         // Use a valid future due date to test the equipment availability check.
-        due_date: getFutureDueDate(),
+        due_date: getFutureDate(60),
       },
     };
 
@@ -694,7 +694,7 @@ describe("Test for loanControllers.js", () => {
         equipment_id: 19,
         borrower_id: 25,
         // Use a valid future due date so the test reaches borrower validation.
-        due_date: getFutureDueDate(),
+        due_date: getFutureDate(60),
       },
     };
 
@@ -751,7 +751,7 @@ describe("Test for loanControllers.js", () => {
         equipment_id: 19,
         borrower_id: 25,
         // Use a valid future due date to test a successful equipment checkout.
-        due_date: getFutureDueDate(),
+        due_date: getFutureDate(60),
       },
     };
 

@@ -13,7 +13,8 @@ import ViewEquipment from "./ViewEquipment";
 import Login from "./Login";
 import Logout from "./Logout";
 
-// Sprint 3 features: equipment check-in and overdue tracking.
+// Sprint 3 equipment checkout, check-in, and overdue features.
+import Checkout from "./Checkout";
 import CheckInEquipment from "./CheckInEquipment";
 import OverdueEquipment from "./OverdueEquipment";
 
@@ -80,16 +81,18 @@ export default function App() {
       {/* Navigation Bar */}
       <nav>
         <Link to="/">Home</Link> - <Link to="/about">About</Link> -{" "}
-        <Link to="/example-page">Example</Link> -{" "}
+        <Link to="/example-page">Example</Link> - {/* Staff navigation */}
         {!loading && ["lab_staff", "department_lead"].includes(user?.role) && (
           <>
             <Link to="/add-user">Add User</Link> -{" "}
             <Link to="/view-users">View Users</Link> -{" "}
             <Link to="/add-equipment">Add Equipment</Link> -{" "}
-            <Link to="/overdue-equipment">Overdue Equipment</Link> -{" "}
+            <Link to="/checkout-equipment">Equipment Checkout</Link> -{" "}
             <Link to="/check-in-equipment">Check In Equipment</Link> -{" "}
+            <Link to="/overdue-equipment">Overdue Equipment</Link> -{" "}
           </>
         )}
+        {/* Authenticated user navigation */}
         {!loading && user && (
           <>
             <Link to="/view-equipment">View Equipment</Link> -{" "}
@@ -101,6 +104,7 @@ export default function App() {
           ) : (
             <Link to="/login">Login</Link>
           ))}
+        {/* Borrower navigation */}
         {!loading && user?.role === "borrower" && (
           <>
             {" "}
@@ -117,7 +121,7 @@ export default function App() {
         <Route path="/example-page" element={<Example />} />
         <Route path="/login" element={<Login />} />
 
-        {/* Routes available to authenticated users */}
+        {/* Authenticated user routes */}
         <Route
           path="/view-equipment"
           element={
@@ -164,22 +168,32 @@ export default function App() {
           }
         />
 
-        {/* Cristian's overdue equipment feature */}
+        {/* Equipment checkout */}
         <Route
-          path="/overdue-equipment"
+          path="/checkout-equipment"
           element={
             <StaffRoute>
-              <OverdueEquipment />
+              <Checkout />
             </StaffRoute>
           }
         />
 
-        {/* Staff equipment check-in feature */}
+        {/* Equipment check-in */}
         <Route
           path="/check-in-equipment"
           element={
             <StaffRoute>
               <CheckInEquipment />
+            </StaffRoute>
+          }
+        />
+
+        {/* Overdue equipment */}
+        <Route
+          path="/overdue-equipment"
+          element={
+            <StaffRoute>
+              <OverdueEquipment />
             </StaffRoute>
           }
         />
