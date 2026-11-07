@@ -24,17 +24,18 @@ router.post(
   "/",
   requireRole(ROLES.LAB_STAFF, ROLES.DEPARTMENT_LEAD),
   async (req, res) => {
-    // add equipment
+    // Add equipment with an optional location.
     try {
       const {
         name,
         asset_tag,
         description,
+        location,
         status = "available",
         equipment_condition = "good",
       } = req.body;
 
-      // Validate required fields
+      // Validate required equipment fields.
       if (
         typeof name !== "string" ||
         !name.trim() ||
@@ -55,7 +56,13 @@ router.post(
         "retired",
       ];
 
-      const validConditions = ["excellent", "good", "fair", "poor", "damaged"];
+      const validConditions = [
+        "excellent",
+        "good",
+        "fair",
+        "poor",
+        "damaged",
+      ];
 
       if (!validStatuses.includes(status)) {
         return res.status(400).json({
@@ -75,14 +82,25 @@ router.post(
         });
       }
 
+      // Location is optional but must fit the database column.
+      if (
+        location != null &&
+        (typeof location !== "string" || location.trim().length > 150)
+      ) {
+        return res.status(400).json({
+          error: "Location must be text and no longer than 150 characters",
+        });
+      }
+
       const [result] = await pool.execute(
         `INSERT INTO equipment
-             (name, asset_tag, description, status, equipment_condition)
-             VALUES (?, ?, ?, ?, ?)`,
+         (name, asset_tag, description, location, status, equipment_condition)
+         VALUES (?, ?, ?, ?, ?, ?)`,
         [
           name.trim(),
           asset_tag.trim(),
           description || null,
+          location?.trim() || null,
           status,
           equipment_condition,
         ],
@@ -112,22 +130,22 @@ const validStatuses = ["available", "checked_out", "maintenance", "retired"];
 
 const validConditions = ["excellent", "good", "fair", "poor", "damaged"];
 
-// GET - Retrieve all equipment
-// requireRole(ROLES.LAB_STAFF, ROLES.DEPARTMENT_LEAD),
+// GET - Retrieve all equipment, including assigned locations.
 router.get("/", async (req, res) => {
   try {
     const [rows] = await pool.execute(
       `SELECT
-                id,
-                name,
-                asset_tag,
-                description,
-                status,
-                equipment_condition,
-                created_at,
-                updated_at
-             FROM equipment
-             ORDER BY id DESC`,
+          id,
+          name,
+          asset_tag,
+          description,
+          location,
+          status,
+          equipment_condition,
+          created_at,
+          updated_at
+       FROM equipment
+       ORDER BY id DESC`,
     );
 
     res.json(rows);
@@ -140,7 +158,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// PUT - Update equipment
+// PUT - Update equipment and its optional location.
 router.put(
   "/:id",
   requireRole(ROLES.LAB_STAFF, ROLES.DEPARTMENT_LEAD),
@@ -148,8 +166,14 @@ router.put(
     try {
       const { id } = req.params;
 
-      const { name, asset_tag, description, status, equipment_condition } =
-        req.body;
+      const {
+        name,
+        asset_tag,
+        description,
+        location,
+        status,
+        equipment_condition,
+      } = req.body;
 
       if (
         typeof name !== "string" ||
@@ -159,6 +183,8 @@ router.put(
         !asset_tag.trim() ||
         asset_tag.length > 100 ||
         (description != null && typeof description !== "string") ||
+        (location != null &&
+          (typeof location !== "string" || location.trim().length > 150)) ||
         !validStatuses.includes(status) ||
         !validConditions.includes(equipment_condition)
       ) {
@@ -169,16 +195,18 @@ router.put(
 
       const [result] = await pool.execute(
         `UPDATE equipment
-             SET name = ?,
-                 asset_tag = ?,
-                 description = ?,
-                 status = ?,
-                 equipment_condition = ?
-             WHERE id = ?`,
+         SET name = ?,
+             asset_tag = ?,
+             description = ?,
+             location = ?,
+             status = ?,
+             equipment_condition = ?
+         WHERE id = ?`,
         [
           name.trim(),
           asset_tag.trim(),
           description || null,
+          location?.trim() || null,
           status,
           equipment_condition,
           id,
@@ -210,7 +238,7 @@ router.put(
   },
 );
 
-// DELETE - Delete equipment
+// DELETE - Delete equipment.
 router.delete(
   "/:id",
   requireRole(ROLES.LAB_STAFF, ROLES.DEPARTMENT_LEAD),
