@@ -255,13 +255,19 @@ exports.returnEquipment = async (req, res) => {
       ? condition
       : null;
 
+    const equipmentStatus = ["poor", "damaged", "missing_parts"].includes(
+      condition,
+    )
+      ? "maintenance"
+      : "available";
+
     await connection.execute(
       `UPDATE equipment
    SET
-     status = 'available',
+     status = ?,
      equipment_condition = COALESCE(?, equipment_condition)
    WHERE id = ?`,
-      [equipmentCondition, equipmentId],
+      [equipmentStatus, equipmentCondition, equipmentId],
     );
 
     // Record the return date, selected condition, and optional notes.
