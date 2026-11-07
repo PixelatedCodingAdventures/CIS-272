@@ -354,10 +354,10 @@ describe("Test for loanControllers.js", () => {
     // Retrieve the mocked database connection used during check-in.
     const connection = await db.getConnection();
 
-    // Verify the equipment record was updated using the equipment ID.
+    // Working equipment becomes available and keeps its equipment condition.
     expect(connection.execute).toHaveBeenCalledWith(
       expect.stringContaining("UPDATE equipment"),
-      ["good", 19],
+      ["available", "good", 19],
     );
 
     // Verify the loan was completed using its primary key.
@@ -414,11 +414,11 @@ describe("Test for loanControllers.js", () => {
       message: "Equipment returned successfully!",
     });
 
-    // The equipment table does not support "missing_parts".
-    // Its existing equipment condition must therefore be preserved.
+    // Missing parts require repair, while the existing equipment condition
+    // remains unchanged because missing_parts is a loan return condition.
     expect(connection.execute).toHaveBeenCalledWith(
       expect.stringContaining("UPDATE equipment"),
-      [null, 20],
+      ["maintenance", null, 20],
     );
 
     // The loan records the exact return condition and optional notes.
@@ -469,11 +469,11 @@ describe("Test for loanControllers.js", () => {
     // Verify the check-in succeeded.
     expect(res.status).toHaveBeenCalledWith(200);
 
-    // "working" is not an equipment_condition ENUM value,
-    // so the equipment's existing condition must be preserved.
+    // Working equipment is available, while its existing equipment condition
+    // remains unchanged because working is a loan return condition.
     expect(connection.execute).toHaveBeenCalledWith(
       expect.stringContaining("UPDATE equipment"),
-      [null, 21],
+      ["available", null, 21],
     );
 
     // Verify the loan records "working" with NULL notes.
@@ -528,10 +528,10 @@ describe("Test for loanControllers.js", () => {
       message: "Equipment returned successfully!",
     });
 
-    // "damaged" is supported by the equipment_condition ENUM.
+    // Damaged equipment remains unavailable for checkout while it is repaired.
     expect(connection.execute).toHaveBeenCalledWith(
       expect.stringContaining("UPDATE equipment"),
-      ["damaged", 22],
+      ["maintenance", "damaged", 22],
     );
 
     // Verify both the return condition and notes are recorded.
@@ -661,6 +661,42 @@ describe("Test for loanControllers.js", () => {
     const body = res.json.mock.calls[0][0];
     expect(res.status).toHaveBeenCalledWith(409);
     expect(body).toEqual({ message: "Equipment is not available." });
+  });
+
+  test("checkoutEquipment rejects equipment marked for maintenance", async () => {
+    db.getConnection = jest.fn().mockResolvedValue({
+      beginTransaction: jest.fn(),
+      commit: jest.fn(),
+      rollback: jest.fn(),
+      release: jest.fn(),
+      query: db.query.mockResolvedValueOnce([
+        [
+          {
+            id: 20,
+            name: "Damaged equipment",
+            asset_tag: "DAMAGED-001",
+            status: "maintenance",
+            equipment_condition: "damaged",
+          },
+        ],
+      ]),
+    });
+
+    const req = {
+      body: {
+        equipment_id: 20,
+        borrower_id: 25,
+        due_date: getFutureDate(60),
+      },
+    };
+
+    const res = makeMockRes();
+    await checkoutEquipment(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Equipment is not available.",
+    });
   });
 
   test("checkoutEquipment throws 404 for user not being found", async () => {
