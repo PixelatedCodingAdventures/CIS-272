@@ -337,35 +337,44 @@ exports.getEquipmentHistory = async (req, res) => {
   try {
     const equipmentID = req.params.id;
 
-    const check = await pool.query("SELECT * FROM equipment WHERE id = ?", [
-      equipmentID,
-    ]);
-
-    if (check[0].length === 0) {
-      // Stop execution after sending a 404 response for nonexistent equipment.
-      // This prevents the controller from attempting to send another response.
-      return res
-        .status(404)
-        .json({ message: "No equipment found with id " + equipmentID });
-    }
-
-    const output = await pool.query(
-      "SELECT * FROM loans WHERE equipment_id = ?",
-      [equipmentID],
+    const [equipment] = await pool.query(
+      "SELECT id FROM equipment WHERE id = ?",
+      [equipmentID]
     );
-    if (output[0].length === 0) {
-      // Stop execution after sending a 404 response when no loan history exists.
-      return res
-        .status(404)
-        .json({ message: "No loan history found with id " + equipmentID });
-    } else {
-      // Return the equipment's loan history when records are found.
-      return res.status(200).json(output[0]);
+
+    if (equipment.length === 0) {
+      return res.status(404).json({
+        message: "Equipment not found."
+      });
     }
+
+    const [history] = await pool.query(
+      `SELECT
+          l.id,
+          l.equipment_id,
+          l.borrower_id,
+          u.name AS borrower_name,
+          l.checkout_date,
+          l.due_date,
+          l.return_date,
+          l.return_condition,
+          CASE
+            WHEN l.return_date IS NULL THEN 'active'
+            ELSE 'returned'
+          END AS status
+       FROM loans l
+       JOIN users u ON l.borrower_id = u.id
+       WHERE l.equipment_id = ?
+       ORDER BY l.checkout_date DESC, l.id DESC`,
+      [equipmentID]
+    );
+
+    return res.status(200).json(history);
   } catch (error) {
     console.error(error);
+
     return res.status(500).json({
-      message: "An internal server error occurred.",
+      message: "An internal server error occurred."
     });
   }
 };
