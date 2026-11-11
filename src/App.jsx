@@ -92,7 +92,6 @@ export default function App() {
             <Link to="/checkout-equipment">Equipment Checkout</Link> -{" "}
             <Link to="/check-in-equipment">Check In Equipment</Link> -{" "}
             <Link to="/overdue-equipment">Overdue Equipment</Link> -{" "}
-
             <Link to="/equipment-history">Equipment History</Link> -{" "}
           </>
         )}
@@ -135,17 +134,6 @@ export default function App() {
           }
         />
 
-       
-
-           <Route
-          path="/equipment-history"
-          element={
-            <ProtectedRoute>
-              <EquipmentHistory />
-            </ProtectedRoute>
-          }
-        />
-
         <Route
           path="/logout"
           element={
@@ -179,6 +167,16 @@ export default function App() {
           element={
             <StaffRoute>
               <AddEquipment />
+            </StaffRoute>
+          }
+        />
+
+        {/* Staff-only equipment history */}
+        <Route
+          path="/equipment-history"
+          element={
+            <StaffRoute>
+              <EquipmentHistory />
             </StaffRoute>
           }
         />
