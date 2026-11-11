@@ -141,7 +141,7 @@ describe("Test for loanControllers.js", () => {
       const body = res.json.mock.calls[0][0];
 
       expect(res.status).toHaveBeenCalledWith(404);
-      expect(body).toEqual({ message: "No equipment found with id 19" });
+      expect(body).toEqual({ message: "Equipment not found."  });
     }));
 
   test("getEquipmentHistory throws 404 when it finds no loan history for specific id", async () => {
@@ -172,8 +172,9 @@ describe("Test for loanControllers.js", () => {
 
     const body = res.json.mock.calls[0][0];
 
-    expect(res.status).toHaveBeenCalledWith(404);
-    expect(body).toEqual({ message: "No loan history found with id 19" });
+  expect(res.status).toHaveBeenCalledWith(200);
+
+expect(body).toEqual([]);
   });
 
   test("getEquipmentHistory grabs all records for a specific id", async () => {

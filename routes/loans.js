@@ -3,6 +3,17 @@ const router = express.Router();
 const pool = require("../db");
 const { ROLES, requireRole } = require("../middleware/auth");
 
+
+const {
+  getEquipmentHistory
+} = require("../controllers/loanControllers");
+
+router.get(
+  "/history/:id",
+  requireRole(ROLES.LAB_STAFF, ROLES.DEPARTMENT_LEAD),
+  getEquipmentHistory
+);
+
 // GET /loans/my - borrowers see only their own loans
 router.get("/my", requireRole(ROLES.BORROWER), async (req, res) => {
   try {

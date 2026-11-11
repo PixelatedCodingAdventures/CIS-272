@@ -13,6 +13,8 @@ import ViewEquipment from "./ViewEquipment";
 import Login from "./Login";
 import Logout from "./Logout";
 
+import EquipmentHistory from "./EquipmentHistory";
+
 // Sprint 3 equipment checkout, check-in, and overdue features.
 import Checkout from "./Checkout";
 import CheckInEquipment from "./CheckInEquipment";
@@ -90,6 +92,8 @@ export default function App() {
             <Link to="/checkout-equipment">Equipment Checkout</Link> -{" "}
             <Link to="/check-in-equipment">Check In Equipment</Link> -{" "}
             <Link to="/overdue-equipment">Overdue Equipment</Link> -{" "}
+
+            <Link to="/equipment-history">Equipment History</Link> -{" "}
           </>
         )}
         {/* Authenticated user navigation */}
@@ -127,6 +131,17 @@ export default function App() {
           element={
             <ProtectedRoute>
               <ViewEquipment />
+            </ProtectedRoute>
+          }
+        />
+
+       
+
+           <Route
+          path="/equipment-history"
+          element={
+            <ProtectedRoute>
+              <EquipmentHistory />
             </ProtectedRoute>
           }
         />
