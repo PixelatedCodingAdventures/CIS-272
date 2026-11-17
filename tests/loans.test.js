@@ -7,6 +7,8 @@ const {
   returnEquipment,
   checkoutEquipment,
   getActiveLoans,
+  getBorrowerActiveLoans,
+  getBorrowerLoanHistory,
 } = require("../controllers/loanControllers");
 
 const db = require("../db");
@@ -62,6 +64,22 @@ describe("Test for loanControllers.js", () => {
   });
 
   test("Database failure returns 500 for returnEquipment", async () => {
+    const req = {};
+    let res = makeMockRes();
+    await returnEquipment(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+  });
+
+  test("Database failure returns 500 for getBorrowerActiveLoans", async () => {
+    const req = {};
+    let res = makeMockRes();
+    await returnEquipment(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+  });
+
+  test("Database failure returns 500 for getBorrowerLoanHistory", async () => {
     const req = {};
     let res = makeMockRes();
     await returnEquipment(req, res);
@@ -847,4 +865,155 @@ expect(body).toEqual([]);
       message: "An internal server error occurred.",
     });
   });
+
+   test("getBorrowerActiveLoans throws 404 for no id", async () => {
+      db.query.mockResolvedValue([[]]);
+
+      const req = {
+        params: {
+          
+        },
+      };
+      let res = makeMockRes();
+      await getBorrowerActiveLoans(req, res);
+
+      const body = res.json.mock.calls[0][0];
+
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(body).toEqual({ message: "A borrower id is required."  });
+    });
+     test("getBorrowerActiveLoans throws 404 for no active loans found", async () => {
+      db.query.mockResolvedValue([[]]);
+
+      const req = {
+        params: {
+          borrower_id: 19
+        },
+      };
+      let res = makeMockRes();
+      await getBorrowerActiveLoans(req, res);
+
+      const body = res.json.mock.calls[0][0];
+
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(body).toEqual({ message: "There is no active loans for that borrower."  });
+    });
+    test("getBorrowerActiveLoans throws 200 for finding loans", async () => {
+      const mockData = [{
+        "id": 803,
+        "borrower_id": 25,
+        "equipment_id": 19,
+        "checkout_date": "2026-11-07T15:09:46.000Z",
+        "due_date": "2026-11-08T08:00:00.000Z",
+        "return_date": null,
+        "return_condition": null,
+        "active_equipment_id": 19,
+        "created_at": "2026-11-07T15:09:46.000Z",
+        "updated_at": "2026-11-07T15:09:46.000Z",
+        "return_condition_notes": null
+    }]
+    const expectedData = [{
+        "id": 803,
+        "borrower_id": 25,
+        "equipment_id": 19,
+        "checkout_date": "2026-11-07T15:09:46.000Z",
+        "due_date": "2026-11-08T08:00:00.000Z",
+        "return_date": null,
+        "return_condition": null,
+        "active_equipment_id": 19,
+        "created_at": "2026-11-07T15:09:46.000Z",
+        "updated_at": "2026-11-07T15:09:46.000Z",
+        "return_condition_notes": null
+    }]
+      db.query.mockResolvedValue([mockData]);
+
+      const req = {
+        params: {
+          borrower_id: 19
+        },
+      };
+      let res = makeMockRes();
+      await getBorrowerActiveLoans(req, res);
+
+      const body = res.json.mock.calls[0][0];
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(body).toEqual(expectedData)
+      
+    });
+    test("getBorrowerLoanHistory throws 404 for no id", async () => {
+      db.query.mockResolvedValue([[]]);
+
+      const req = {
+        params: {
+          
+        },
+      };
+      let res = makeMockRes();
+      await getBorrowerLoanHistory(req, res);
+
+      const body = res.json.mock.calls[0][0];
+
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(body).toEqual({ message: "A borrower id is required."  });
+    });
+     test("getBorrowerLoanHistory throws 404 for no active loans found", async () => {
+      db.query.mockResolvedValue([[]]);
+
+      const req = {
+        params: {
+          borrower_id: 19
+        },
+      };
+      let res = makeMockRes();
+      await getBorrowerLoanHistory(req, res);
+
+      const body = res.json.mock.calls[0][0];
+
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(body).toEqual({ message: "There is no loan history for that borrower."  });
+    });
+    test("getBorrowerLoanHistory throws 200 for finding loans", async () => {
+      const mockData = [{
+        "id": 804,
+        "borrower_id": 25,
+        "equipment_id": 392,
+        "checkout_date": "2026-10-13T18:12:56.000Z",
+        "due_date": "2026-10-23T18:12:56.000Z",
+        "return_date": null,
+        "return_condition": null,
+        "active_equipment_id": 392,
+        "created_at": "2026-11-12T19:12:56.000Z",
+        "updated_at": "2026-11-12T19:12:56.000Z",
+        "return_condition_notes": null
+    }]
+    const expectedData = [{
+        "id": 804,
+        "borrower_id": 25,
+        "equipment_id": 392,
+        "checkout_date": "2026-10-13T18:12:56.000Z",
+        "due_date": "2026-10-23T18:12:56.000Z",
+        "return_date": null,
+        "return_condition": null,
+        "active_equipment_id": 392,
+        "created_at": "2026-11-12T19:12:56.000Z",
+        "updated_at": "2026-11-12T19:12:56.000Z",
+        "return_condition_notes": null
+    }]
+      db.query.mockResolvedValue([mockData]);
+
+      const req = {
+        params: {
+          borrower_id: 19
+        },
+      };
+      let res = makeMockRes();
+      await getBorrowerLoanHistory(req, res);
+
+      const body = res.json.mock.calls[0][0];
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(body).toEqual(expectedData)
+      
+    });
 });
