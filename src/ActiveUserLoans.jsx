@@ -41,6 +41,7 @@ const ActiveUserLoans = () => {
         
             setSubmitted(true)
             setEquipment([])
+            setLoans([])
             
             try {
                 const API_URL = 'http://localhost:3000'

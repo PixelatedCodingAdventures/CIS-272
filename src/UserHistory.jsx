@@ -41,6 +41,7 @@ const UserHistory = () => {
       const handleSubmit = async (e) => {
           e.preventDefault();
           setSubmitted(true)
+          setEquipment([])
           setLoans([])
           try {
               const API_URL = 'http://localhost:3000'
