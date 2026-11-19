@@ -378,3 +378,48 @@ exports.getEquipmentHistory = async (req, res) => {
     });
   }
 };
+
+
+exports.getBorrowerActiveLoans = async (req, res) => {
+  try {
+    const borrower_id = req.params.borrower_id
+    if (!borrower_id){
+      return res.status(404).json({message: "A borrower id is required."})
+    }
+    const [loans] = await pool.query(
+      `SELECT * FROM loans WHERE borrower_id = ? AND active_equipment_id IS NOT NULL`,
+      [borrower_id]
+    )
+    if(loans.length === 0){
+      return res.status(404).json({message: "There is no active loans for that borrower."})
+    }
+    return res.status(200).json(loans)
+  } catch (error){
+    console.log(error)
+    return res.status(500).json({
+      message: "An internal server error occured"
+    })
+  }
+};
+
+exports.getBorrowerLoanHistory = async (req, res) => {
+  try{
+    const borrower_id = req.params.borrower_id
+    if (!borrower_id){
+      return res.status(404).json({message: "A borrower id is required."})
+    }
+    const [loans] = await pool.query(
+      `SELECT * FROM loans WHERE borrower_id = ? ORDER BY checkout_date DESC`,
+      [borrower_id]
+    )
+    if(loans.length === 0){
+      return res.status(404).json({message: "There is no loan history for that borrower."})
+    }
+    return res.status(200).json(loans)
+  } catch (error){
+    console.log(error)
+    return res.status(500).json({
+      message: "An internal server error occured"
+    })
+  }
+}
