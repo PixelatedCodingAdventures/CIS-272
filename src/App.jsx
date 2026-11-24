@@ -14,11 +14,15 @@ import Login from "./Login";
 import Logout from "./Logout";
 
 import EquipmentHistory from "./EquipmentHistory";
+import UserHistory from "./UserHistory";
+import ActiveUserLoans from "./ActiveUserLoans";
 
 // Sprint 3 equipment checkout, check-in, and overdue features.
 import Checkout from "./Checkout";
 import CheckInEquipment from "./CheckInEquipment";
 import OverdueEquipment from "./OverdueEquipment";
+
+
 
 import "./App.css";
 
@@ -88,6 +92,8 @@ export default function App() {
           <>
             <Link to="/add-user">Add User</Link> -{" "}
             <Link to="/view-users">View Users</Link> -{" "}
+            <Link to="/user-history">User History</Link> -{" "}
+            <Link to="/active-user-loans">Active User Loans</Link> -{" "}
             <Link to="/add-equipment">Add Equipment</Link> -{" "}
             <Link to="/checkout-equipment">Equipment Checkout</Link> -{" "}
             <Link to="/check-in-equipment">Check In Equipment</Link> -{" "}
@@ -158,6 +164,22 @@ export default function App() {
           element={
             <StaffRoute>
               <ViewUsers />
+            </StaffRoute>
+          }
+        />
+        <Route
+          path="/user-history"
+          element={
+            <StaffRoute>
+              <UserHistory/>
+            </StaffRoute>
+          }
+        />
+        <Route
+          path="/active-user-loans"
+          element={
+            <StaffRoute>
+              <ActiveUserLoans/>
             </StaffRoute>
           }
         />
