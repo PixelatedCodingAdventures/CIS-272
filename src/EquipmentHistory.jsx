@@ -233,8 +233,15 @@ function EquipmentHistoryPage() {
                           style={{
                             color:
                               loan.return_date === null
-                                ? "orange"
-                                : "green",
+                                ? "#7d4e00"
+                                : "#116329",
+                            backgroundColor:
+                              loan.return_date === null
+                                ? "#fff8c5"
+                                : "#dafbe1",
+                            borderRadius: "999px",
+                            display: "inline-block",
+                            padding: "2px 10px",
                           }}
                         >
                           {loan.return_date === null
