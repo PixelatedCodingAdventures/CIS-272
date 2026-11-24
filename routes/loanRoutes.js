@@ -6,6 +6,8 @@ const {
   returnEquipment,
   checkoutEquipment,
   getActiveLoans,
+  getBorrowerActiveLoans,
+  getBorrowerLoanHistory,
 } = require("../controllers/loanControllers");
 const { ROLES, requireRole } = require("../middleware/auth");
 
@@ -28,6 +30,16 @@ router.get(
   getEquipmentHistory,
 );
 
+
+router.get(
+  "/loans/borrower/:borrower_id",
+  requireRole(ROLES.LAB_STAFF, ROLES.DEPARTMENT_LEAD),
+  getBorrowerActiveLoans
+);
+
+
+
+
 router.post(
   "/loans/checkout",
   requireRole(ROLES.LAB_STAFF, ROLES.DEPARTMENT_LEAD),
@@ -38,6 +50,12 @@ router.patch(
   "/loans/:id/return",
   requireRole(ROLES.LAB_STAFF, ROLES.DEPARTMENT_LEAD),
   returnEquipment,
+);
+
+router.get(
+  "/loans/borrower/history/:borrower_id",
+  requireRole(ROLES.LAB_STAFF, ROLES.DEPARTMENT_LEAD),
+  getBorrowerLoanHistory,
 );
 
 module.exports = router;
