@@ -281,6 +281,39 @@ Install Forever globally:
 sudo npm install -g forever
 ```
 
+
+## Bundle the React build
+
+```
+npm run build 
+```
+
+## Alter app.js to serve the React build
+```
+comment out
+/*
+app.get("/", (req, res) => {
+  res.send("Equipment Checkout API");
+});
+*/
+```
+## Alter server.js to serve the React build
+after "const PORT" add:
+```
+
+
+const path = require("path");
+
+app.use(express.static(path.join(__dirname, "dist")));
+
+app.get("/{*splat}", (req, res) => {
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
+});
+
+
+```
+
+
 ## Start the Application
 
 Start the Express.js application:
